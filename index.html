@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Competencias personales y sociales</title>
+<style>
+:root{
+  --bg:#0f1724; --card:#0b1220; --accent:#06b6d4; --muted:#94a3b8; --correct:#10b981; --wrong:#ef4444;
+  --glass: rgba(255,255,255,0.04);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:linear-gradient(180deg,#071029 0%, #081428 100%);color:#eef2ff}
+.container{max-width:920px;margin:28px auto;padding:20px}
+.header{display:flex;align-items:center;gap:16px}
+.logo{width:72px;height:72px;border-radius:14px;background:linear-gradient(135deg,var(--accent),#7c3aed);display:grid;place-items:center;font-weight:700;color:#021024;box-shadow:0 6px 20px rgba(7,12,20,0.6)}
+.title{font-size:20px;font-weight:700}
+.subtitle{color:var(--muted);font-size:13px;margin-top:6px}
+.card{background:var(--card);border-radius:12px;padding:18px;margin-top:18px;box-shadow: 0 8px 30px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03)}
+.center{text-align:center}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.btn{padding:10px 14px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),#7c3aed);color:#021024;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(7,12,20,0.5)}
+.small{font-size:13px;padding:8px 10px}
+.qtext{font-size:20px;font-weight:700;margin-bottom:10px}
+.options{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opt{background:var(--glass);padding:12px;border-radius:10px;cursor:pointer;border:1px solid rgba(255,255,255,0.03);transition:transform .12s,box-shadow .12s}
+.opt:hover{transform:translateY(-4px);box-shadow:0 10px 30px rgba(2,6,23,0.6)}
+.timer{height:10px;background:rgba(255,255,255,0.06);border-radius:999px;overflow:hidden;margin-top:12px}
+.timer > i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--accent),#7c3aed);transform-origin:left;transform:scaleX(1)}
+.meta{display:flex;justify-content:space-between;align-items:center;margin-top:10px;color:var(--muted);font-size:13px}
+.hide{display:none}
+.result{font-size:18px;font-weight:700;margin-top:12px}
+.footer{color:var(--muted);font-size:13px;margin-top:14px;text-align:center}
+.inputname{padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit;width:100%}
+.scoreboard{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.row-score{display:flex;justify-content:space-between;background:rgba(255,255,255,0.02);padding:8px;border-radius:8px}
+.correct{border:2px solid rgba(16,185,129,0.12);background:linear-gradient(90deg, rgba(16,185,129,0.06), transparent)}
+.wrong{border:2px solid rgba(239,68,68,0.12);background:linear-gradient(90deg, rgba(239,68,68,0.04), transparent)}
+.center-vert{display:flex;align-items:center;gap:12px}
+.large{font-size:28px;font-weight:800}
+.legend{font-size:12px;color:var(--muted)}
+.footer a{color:var(--accent);text-decoration:none}
+@media (max-width:640px){
+  .options{grid-template-columns:1fr}
+  .header{flex-direction:column;align-items:flex-start}
+  .logo{width:56px;height:56px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="logo">IPE</div>
+    <div>
+      <div class="title">Competencias personales y sociales</div>
+      <div class="subtitle">Basado en la presentación "Exposición IPE II" — 7 preguntas • Practica individual</div>
+    </div>
+  </div>
+
+  <div id="setup" class="card">
+    <div class="row">
+      <div style="flex:1">
+        <label class="legend">Tu nombre</label>
+        <input id="playerName" class="inputname" placeholder="Escribe tu nombre..." value="Jugador"/>
+      </div>
+      <div style="width:180px">
+        <label class="legend">Tiempo por pregunta</label>
+        <select id="timeSelect" class="inputname">
+          <option value="8">8 s</option>
+          <option value="10" selected>10 s</option>
+          <option value="15">15 s</option>
+        </select>
+      </div>
+      <div style="width:150px;display:flex;align-items:flex-end">
+        <button id="startBtn" class="btn">Comenzar juego</button>
+      </div>
+    </div>
+    <div class="footer">Consejo: Responde rápido para conseguir más puntos. Cada respuesta correcta suma 1000 puntos + bonus por tiempo restante.</div>
+  </div>
+
+  <div id="game" class="card hide">
+    <div class="center">
+      <div id="qNum" class="legend">Pregunta 1 / 7</div>
+      <div id="question" class="qtext">Aquí va la pregunta</div>
+      <div id="options" class="options"></div>
+      <div class="timer" aria-hidden="true"><i id="bar"></i></div>
+      <div class="meta">
+        <div id="feedback" class="legend">Selecciona la respuesta</div>
+        <div id="points" class="legend">Puntos: 0</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="end" class="card hide center">
+    <div class="large" id="finalScore">¡Puntuación: 0!</div>
+    <div id="endText" class="result">Gracias por jugar — repasa las competencias y vuelve a intentarlo.</div>
+    <div class="scoreboard" id="scoreboard"></div>
+    <div style="margin-top:14px">
+      <button id="replay" class="btn small">Jugar otra vez</button>
+      <button id="downloadBtn" class="btn small" style="background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--accent);margin-left:8px">Descargar resultados</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Questions pulled and adapted from the user's PPT "Exposición IPE II"
+const QUESTIONS = [
+  {
+    q: "¿Qué son las competencias personales?",
+    options: [
+      "Habilidades para relacionarse con los demás",
+      "Habilidades relacionadas contigo mismo, tus emociones y organización",
+      "Técnicas de trabajo en equipo",
+      "Estrategias de liderazgo empresarial"
+    ],
+    answer: 1
+  },
+  {
+    q: "¿Cuál de las siguientes NO es una competencia personal?",
+    options: ["Autocontrol","Automotivación","Empatía","Responsabilidad"],
+    answer: 2
+  },
+  {
+    q: "Las competencias sociales se centran en...",
+    options: ["Cómo te relacionas con los demás","Cómo gestionas tu tiempo","Tus fortalezas y debilidades","Tus metas personales"],
+    answer: 0
+  },
+  {
+    q: "¿Qué habilidad se asocia con la resolución de conflictos?",
+    options: ["Escuchar sin opinar","Evitar la comunicación","Buscar acuerdos constructivos","Imponer tu punto de vista"],
+    answer: 2
+  },
+  {
+    q: "¿Por qué es importante la adaptabilidad en el entorno laboral?",
+    options: ["Permite mantener rutinas sin cambios","Facilita ajustarse a nuevas condiciones y roles","Evita asumir responsabilidades","Reduce la necesidad de aprender cosas nuevas"],
+    answer: 1
+  },
+  {
+    q: "¿Qué competencia impulsa el compromiso y la creatividad en el trabajo?",
+    options: ["Motivación","Empatía","Autorregulación","Influencia"],
+    answer: 0
+  },
+  {
+    q: "En el emprendimiento, la conciencia individual permite...",
+    options: ["Evitar riesgos innecesarios","Conocerse a uno mismo y tener claros valores y objetivos","Depender del entorno laboral","Reducir el trabajo en equipo"],
+    answer: 1
+  }
+];
+
+let state = {
+  player: 'Jugador',
+  timePerQuestion: 10,
+  current: 0,
+  score: 0,
+  timer: null,
+  startTime: null
+};
+
+const startBtn = document.getElementById('startBtn');
+const gameEl = document.getElementById('game');
+const setupEl = document.getElementById('setup');
+const endEl = document.getElementById('end');
+const qNumEl = document.getElementById('qNum');
+const questionEl = document.getElementById('question');
+const optionsEl = document.getElementById('options');
+const barEl = document.getElementById('bar');
+const feedbackEl = document.getElementById('feedback');
+const pointsEl = document.getElementById('points');
+const finalScoreEl = document.getElementById('finalScore');
+const scoreboardEl = document.getElementById('scoreboard');
+const replayBtn = document.getElementById('replay');
+const downloadBtn = document.getElementById('downloadBtn');
+
+startBtn.addEventListener('click', () => {
+  const name = document.getElementById('playerName').value.trim();
+  state.player = name || 'Jugador';
+  state.timePerQuestion = parseInt(document.getElementById('timeSelect').value,10) || 10;
+  setupEl.classList.add('hide');
+  gameEl.classList.remove('hide');
+  state.current = 0;
+  state.score = 0;
+  renderQuestion();
+});
+
+function renderQuestion(){
+  clearInterval(state.timer);
+  const q = QUESTIONS[state.current];
+  qNumEl.textContent = `Pregunta ${state.current+1} / ${QUESTIONS.length}`;
+  questionEl.textContent = q.q;
+  optionsEl.innerHTML = '';
+  feedbackEl.textContent = 'Selecciona la respuesta';
+  pointsEl.textContent = `Puntos: ${state.score}`;
+  q.options.forEach((opt, idx) => {
+    const d = document.createElement('div');
+    d.className = 'opt';
+    d.setAttribute('data-i', idx);
+    d.innerHTML = `<div>${String.fromCharCode(65+idx)}. <strong>${opt}</strong></div>`;
+    d.addEventListener('click', onAnswer);
+    optionsEl.appendChild(d);
+  });
+  startTimer(state.timePerQuestion);
+}
+
+function startTimer(seconds){
+  let remaining = seconds;
+  barEl.style.transform = 'scaleX(1)';
+  const step = 50; // ms
+  const total = seconds * 1000;
+  const start = Date.now();
+  state.startTime = start;
+  state.timer = setInterval(()=>{
+    const elapsed = Date.now() - start;
+    const ratio = Math.max(0, Math.min(1, 1 - elapsed/total));
+    barEl.style.transform = `scaleX(${ratio})`;
+    if(elapsed >= total){
+      clearInterval(state.timer);
+      handleTimeout();
+    }
+  }, step);
+}
+
+function onAnswer(e){
+  const el = e.currentTarget;
+  const selected = parseInt(el.getAttribute('data-i'),10);
+  evaluate(selected, el);
+}
+
+function evaluate(selected, el){
+  clearInterval(state.timer);
+  const q = QUESTIONS[state.current];
+  const correct = q.answer;
+  // reveal correct and mark choices
+  Array.from(optionsEl.children).forEach((child, idx)=>{
+    child.classList.remove('correct','wrong');
+    child.style.pointerEvents='none';
+    if(idx === correct) child.classList.add('correct');
+    if(idx === selected && idx !== correct) child.classList.add('wrong');
+  });
+  if(selected === correct){
+    // scoring: base 1000 + bonus proportional to time left (0-1000)
+    const elapsed = (Date.now() - state.startTime)/1000;
+    const timeLeft = Math.max(0, state.timePerQuestion - elapsed);
+    const bonus = Math.round((timeLeft / state.timePerQuestion) * 1000);
+    const gained = 1000 + bonus;
+    state.score += gained;
+    feedbackEl.textContent = `✅ Correcto — +${gained} puntos (bonus ${bonus})`;
+  } else {
+    feedbackEl.textContent = `❌ Incorrecto — respuesta correcta: ${String.fromCharCode(65+correct)}.`;
+  }
+  pointsEl.textContent = `Puntos: ${state.score}`;
+  // next question after short delay
+  setTimeout(()=>{
+    state.current++;
+    if(state.current < QUESTIONS.length){
+      renderQuestion();
+    } else {
+      endGame();
+    }
+  },1200);
+}
+
+function handleTimeout(){
+  // mark correct answer, none selected
+  const q = QUESTIONS[state.current];
+  Array.from(optionsEl.children).forEach((child, idx)=>{
+    child.style.pointerEvents='none';
+    if(idx === q.answer) child.classList.add('correct');
+  });
+  feedbackEl.textContent = '⏰ Se acabó el tiempo — no se respondió la pregunta.';
+  setTimeout(()=>{
+    state.current++;
+    if(state.current < QUESTIONS.length){
+      renderQuestion();
+    } else {
+      endGame();
+    }
+  },1200);
+}
+
+function endGame(){
+  gameEl.classList.add('hide');
+  endEl.classList.remove('hide');
+  finalScoreEl.textContent = `¡Puntuación: ${state.score}!`;
+  endText.innerHTML = `<div>Buen trabajo, <strong>${state.player}</strong>. Repasa las competencias para mejorar tu puntuación.</div>`;
+  scoreboardEl.innerHTML = `<div class="row-score"><div><strong>${state.player}</strong></div><div>${state.score} pts</div></div>`;
+}
+
+replayBtn.addEventListener('click', ()=>{
+  endEl.classList.add('hide');
+  setupEl.classList.remove('hide');
+});
+
+downloadBtn.addEventListener('click', ()=>{
+  const data = {
+    player: state.player,
+    score: state.score,
+    date: new Date().toISOString(),
+    questionsTotal: QUESTIONS.length
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `resultado_${state.player.replace(/\s+/g,'_')}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+});
+
+// keyboard shortcuts for accessibility
+document.addEventListener('keydown', (e)=>{
+  if(gameEl.classList.contains('hide')) return;
+  const key = e.key.toUpperCase();
+  if(['A','B','C','D'].includes(key)){
+    const idx = key.charCodeAt(0) - 65;
+    const option = optionsEl.querySelector(`[data-i="${idx}"]`);
+    if(option) option.click();
+  }
+});
+</script>
+</body>
+</html>
