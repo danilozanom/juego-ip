@@ -1,4 +1,4 @@
-﻿#requires -version 5.0
+﻿﻿﻿#requires -version 5.0
 <#
     FARMASOFT - Gestor de Rutas y DNS
     App con interfaz grafica (WinForms) para:
@@ -52,7 +52,7 @@ $consoleHandle = [ConsoleHider.Win32]::GetConsoleWindow()
 # ==========================================================
 $Rutas = @("172.16.0.0", "172.16.2.0", "172.16.4.0")
 $Mascara = "255.255.255.0"
-$ServidoresDns = @("172.16.4.100", "172.16.2.100", "172.16.0.100")
+$ServidoresDns = @("172.16.4.100", "172.16.2.100", "172.16.0.100", "8.8.8.8")
 
 # ==========================================================
 # Funciones de logica
@@ -91,6 +91,15 @@ function Get-Adaptadores {
     Get-NetAdapter | Where-Object { $_.Status -eq "Up" } | Select-Object -ExpandProperty Name
 }
 
+function Get-GatewayPredeterminada {
+    $ruta = Get-NetRoute -DestinationPrefix "0.0.0.0/0" -ErrorAction SilentlyContinue |
+        Where-Object { $_.NextHop -ne "0.0.0.0" } |
+        Sort-Object -Property RouteMetric |
+        Select-Object -First 1
+    if ($ruta) { return $ruta.NextHop }
+    return $null
+}
+
 function Set-DnsAdaptador {
     param([string]$Adaptador, [string[]]$Servidores)
     Set-DnsClientServerAddress -InterfaceAlias $Adaptador -ServerAddresses $Servidores -ErrorAction Stop
@@ -115,7 +124,7 @@ $colorTexto   = [System.Drawing.Color]::FromArgb(40, 40, 40)
 
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "FARMASOFT"
-$form.Size = New-Object System.Drawing.Size(480, 560)
+$form.Size = New-Object System.Drawing.Size(480, 620)
 $form.StartPosition = "CenterScreen"
 $form.FormBorderStyle = "FixedDialog"
 $form.MaximizeBox = $false
@@ -160,6 +169,28 @@ $txtGw.Font = $fontBase
 $txtGw.Location = New-Object System.Drawing.Point(125, 144)
 $txtGw.Size = New-Object System.Drawing.Size(200, 28)
 $form.Controls.Add($txtGw)
+
+$btnDetectarGw = New-Object System.Windows.Forms.Button
+$btnDetectarGw.Text = "Detectar"
+$btnDetectarGw.Font = $fontBoton
+$btnDetectarGw.FlatStyle = "Flat"
+$btnDetectarGw.FlatAppearance.BorderSize = 1
+$btnDetectarGw.FlatAppearance.BorderColor = $colorAccento
+$btnDetectarGw.BackColor = [System.Drawing.Color]::White
+$btnDetectarGw.ForeColor = $colorAccento
+$btnDetectarGw.Location = New-Object System.Drawing.Point(335, 143)
+$btnDetectarGw.Size = New-Object System.Drawing.Size(95, 30)
+$btnDetectarGw.UseVisualStyleBackColor = $false
+$form.Controls.Add($btnDetectarGw)
+
+$btnDetectarGw.Add_Click({
+    $gwDetectada = Get-GatewayPredeterminada
+    if ($gwDetectada) {
+        $txtGw.Text = $gwDetectada
+    } else {
+        [System.Windows.Forms.MessageBox]::Show("No se pudo detectar la Gateway automaticamente.", "FARMASOFT", "OK", "Warning")
+    }
+})
 
 $btnAgregarRutas = New-Object System.Windows.Forms.Button
 $btnAgregarRutas.Text = "Añadir rutas"
@@ -246,19 +277,34 @@ $btnRestaurarDns.UseVisualStyleBackColor = $false
 $form.Controls.Add($btnRestaurarDns)
 
 # --------------------- Registro de actividad ---------------------
-$txtLog = New-Object System.Windows.Forms.TextBox
-$txtLog.Location = New-Object System.Drawing.Point(30, 415)
-$txtLog.Size = New-Object System.Drawing.Size(400, 100)
-$txtLog.Multiline = $true
-$txtLog.ReadOnly = $true
-$txtLog.ScrollBars = "Vertical"
-$txtLog.Font = $fontLog
-$txtLog.BackColor = [System.Drawing.Color]::White
-$form.Controls.Add($txtLog)
+$lblLog = New-Object System.Windows.Forms.Label
+$lblLog.Text = "Registro de actividad"
+$lblLog.Font = $fontBoton
+$lblLog.ForeColor = $colorTexto
+$lblLog.AutoSize = $true
+$lblLog.Location = New-Object System.Drawing.Point(30, 415)
+$form.Controls.Add($lblLog)
+
+$panelLog = New-Object System.Windows.Forms.Panel
+$panelLog.Location = New-Object System.Drawing.Point(30, 445)
+$panelLog.Size = New-Object System.Drawing.Size(400, 110)
+$panelLog.BackColor = [System.Drawing.Color]::FromArgb(210, 213, 218)
+$form.Controls.Add($panelLog)
+
+$lstLog = New-Object System.Windows.Forms.ListBox
+$lstLog.Location = New-Object System.Drawing.Point(1, 1)
+$lstLog.Size = New-Object System.Drawing.Size(398, 108)
+$lstLog.BorderStyle = "None"
+$lstLog.Font = New-Object System.Drawing.Font("Segoe UI", 9.5)
+$lstLog.BackColor = [System.Drawing.Color]::White
+$lstLog.ForeColor = $colorTexto
+$lstLog.ItemHeight = 20
+$panelLog.Controls.Add($lstLog)
 
 function Write-Log {
     param([string]$Texto)
-    $txtLog.AppendText("$Texto`r`n")
+    $lstLog.Items.Add($Texto) | Out-Null
+    $lstLog.TopIndex = $lstLog.Items.Count - 1
 }
 
 # --------------------- Eventos ---------------------
@@ -307,5 +353,11 @@ $btnRestaurarDns.Add_Click({
         Write-Log "Error al restaurar DNS: $_"
     }
 })
+
+# --------------------- Autodeteccion inicial ---------------------
+$gwInicial = Get-GatewayPredeterminada
+if ($gwInicial) {
+    $txtGw.Text = $gwInicial
+}
 
 [void]$form.ShowDialog()

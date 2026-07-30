@@ -23,6 +23,7 @@ App con interfaz grafica (WinForms/PowerShell) que reemplaza al script `.bat` or
   1. 172.16.4.100
   2. 172.16.2.100
   3. 172.16.0.100
+  4. 8.8.8.8
 - Pulsa **Restaurar DNS** para volver a obtener el DNS automaticamente por DHCP.
 
 ## Requisitos
