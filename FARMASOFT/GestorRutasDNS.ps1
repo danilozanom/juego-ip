@@ -182,17 +182,17 @@ $fontBoton     = New-Object System.Drawing.Font("Segoe UI", 9.5, [System.Drawing
 $fontLog       = New-Object System.Drawing.Font("Segoe UI", 9.5)
 $fontLogEstado = New-Object System.Drawing.Font("Segoe UI", 9.5, [System.Drawing.FontStyle]::Bold)
 
-$colorFondo      = [System.Drawing.Color]::FromArgb(24, 24, 27)
-$colorTarjeta    = [System.Drawing.Color]::FromArgb(34, 34, 38)
-$colorTarjetaAlt = [System.Drawing.Color]::FromArgb(42, 42, 47)
-$colorBorde      = [System.Drawing.Color]::FromArgb(54, 54, 60)
-$colorAccento    = [System.Drawing.Color]::FromArgb(90, 140, 255)
-$colorTexto      = [System.Drawing.Color]::FromArgb(235, 235, 240)
-$colorTextoSuave = [System.Drawing.Color]::FromArgb(148, 148, 158)
-$colorOk         = [System.Drawing.Color]::FromArgb(98, 189, 128)
-$colorEliminado  = [System.Drawing.Color]::FromArgb(224, 168, 92)
-$colorError      = [System.Drawing.Color]::FromArgb(226, 108, 108)
-$colorAviso      = [System.Drawing.Color]::FromArgb(130, 130, 140)
+$colorFondo      = [System.Drawing.Color]::FromArgb(244, 245, 247)
+$colorTarjeta    = [System.Drawing.Color]::White
+$colorTarjetaAlt = [System.Drawing.Color]::FromArgb(238, 239, 242)
+$colorBorde      = [System.Drawing.Color]::FromArgb(224, 226, 230)
+$colorAccento    = [System.Drawing.Color]::FromArgb(59, 100, 220)
+$colorTexto      = [System.Drawing.Color]::FromArgb(30, 33, 42)
+$colorTextoSuave = [System.Drawing.Color]::FromArgb(110, 114, 128)
+$colorOk         = [System.Drawing.Color]::FromArgb(22, 150, 80)
+$colorEliminado  = [System.Drawing.Color]::FromArgb(200, 120, 20)
+$colorError      = [System.Drawing.Color]::FromArgb(205, 45, 45)
+$colorAviso      = [System.Drawing.Color]::FromArgb(140, 144, 152)
 
 # ==========================================================
 # Formulario principal
@@ -211,7 +211,7 @@ $form.AutoScaleDimensions = New-Object System.Drawing.SizeF(96.0, 96.0)
 
 $form.Add_Load({
     try {
-        $valorOscuro = 1
+        $valorOscuro = 0
         [WinApi.DwmApi]::DwmSetWindowAttribute($form.Handle, 20, [ref]$valorOscuro, 4) | Out-Null
     } catch {}
 })
@@ -268,9 +268,10 @@ function New-BotonSecundario {
     $boton.Text = $Texto
     $boton.Font = $fontBoton
     $boton.FlatStyle = "Flat"
-    $boton.FlatAppearance.BorderSize = 0
-    $boton.FlatAppearance.MouseOverBackColor = [System.Drawing.Color]::FromArgb(58, 58, 64)
-    $boton.BackColor = $colorTarjetaAlt
+    $boton.FlatAppearance.BorderSize = 1
+    $boton.FlatAppearance.BorderColor = $colorBorde
+    $boton.FlatAppearance.MouseOverBackColor = $colorTarjetaAlt
+    $boton.BackColor = $colorTarjeta
     $boton.ForeColor = $colorTexto
     $boton.Location = New-Object System.Drawing.Point($X, $Y)
     $boton.Size = New-Object System.Drawing.Size($Ancho, $Alto)
