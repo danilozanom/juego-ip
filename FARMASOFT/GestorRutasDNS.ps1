@@ -316,54 +316,38 @@ $panelLog.Size = New-Object System.Drawing.Size(460, 140)
 $panelLog.BackColor = [System.Drawing.Color]::FromArgb(215, 218, 222)
 $form.Controls.Add($panelLog)
 
-$lstLog = New-Object System.Windows.Forms.ListBox
-$lstLog.Location = New-Object System.Drawing.Point(1, 1)
-$lstLog.Size = New-Object System.Drawing.Size(458, 138)
-$lstLog.BorderStyle = "None"
-$lstLog.Font = $fontLog
-$lstLog.BackColor = [System.Drawing.Color]::White
-$lstLog.ForeColor = $colorTexto
-$lstLog.ItemHeight = 24
-$lstLog.DrawMode = "OwnerDrawFixed"
-$lstLog.SelectionMode = "None"
-$lstLog.IntegralHeight = $false
-$panelLog.Controls.Add($lstLog)
-
-$lstLog.Add_DrawItem({
-    param($sender, $e)
-    if ($e.Index -lt 0) { return }
-    $texto = $lstLog.Items[$e.Index]
-
-    if ($e.Index % 2 -eq 0) {
-        $fondo = [System.Drawing.Color]::White
-    } else {
-        $fondo = [System.Drawing.Color]::FromArgb(248, 249, 250)
-    }
-    $pincelFondo = New-Object System.Drawing.SolidBrush($fondo)
-    $e.Graphics.FillRectangle($pincelFondo, $e.Bounds)
-
-    $colorLinea = $colorTexto
-    if ($texto -match "Error") {
-        $colorLinea = $colorError
-    } elseif ($texto -match "Agregada|Aplicado|Eliminada|restaurado") {
-        $colorLinea = $colorOk
-    } elseif ($texto -match "Ya existia|No existia") {
-        $colorLinea = $colorAviso
-    }
-
-    $pincelTexto = New-Object System.Drawing.SolidBrush($colorLinea)
-    $rectTexto = New-Object System.Drawing.RectangleF($e.Bounds.X + 10, $e.Bounds.Y + 3, $e.Bounds.Width - 20, $e.Bounds.Height - 6)
-    $e.Graphics.DrawString($texto, $lstLog.Font, $pincelTexto, $rectTexto)
-
-    $pincelFondo.Dispose()
-    $pincelTexto.Dispose()
-})
+$rtbLog = New-Object System.Windows.Forms.RichTextBox
+$rtbLog.Location = New-Object System.Drawing.Point(1, 1)
+$rtbLog.Size = New-Object System.Drawing.Size(458, 138)
+$rtbLog.BorderStyle = "None"
+$rtbLog.Font = $fontLog
+$rtbLog.BackColor = [System.Drawing.Color]::White
+$rtbLog.ForeColor = $colorTexto
+$rtbLog.ReadOnly = $true
+$rtbLog.Multiline = $true
+$rtbLog.ScrollBars = "Vertical"
+$rtbLog.WordWrap = $false
+$panelLog.Controls.Add($rtbLog)
 
 function Write-Log {
     param([string]$Texto)
     $marca = Get-Date -Format "HH:mm:ss"
-    $lstLog.Items.Add("[$marca] $Texto") | Out-Null
-    $lstLog.TopIndex = $lstLog.Items.Count - 1
+    $linea = "[$marca] $Texto"
+
+    $colorLinea = $colorTexto
+    if ($linea -match "Error") {
+        $colorLinea = $colorError
+    } elseif ($linea -match "Agregada|Aplicado|Eliminada|restaurado") {
+        $colorLinea = $colorOk
+    } elseif ($linea -match "Ya existia|No existia") {
+        $colorLinea = $colorAviso
+    }
+
+    $rtbLog.SelectionStart = $rtbLog.TextLength
+    $rtbLog.SelectionLength = 0
+    $rtbLog.SelectionColor = $colorLinea
+    $rtbLog.AppendText("$linea`r`n")
+    $rtbLog.ScrollToCaret()
 }
 
 # --------------------- Eventos ---------------------
