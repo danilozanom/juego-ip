@@ -152,6 +152,10 @@ function Reset-DnsAdaptador {
 
 # ==========================================================
 # Esquinas redondeadas (estilo Windows 11 / Fluent)
+# Se dibujan con GDI+ (Paint), NO recortando con Control.Region:
+# recortar con Region deja las esquinas sin pintar y aparecen
+# como manchas/brillos negros. Dibujando el borde redondeado
+# directamente se evita ese problema por completo.
 # ==========================================================
 function Get-RoundedPath {
     param([int]$Width, [int]$Height, [int]$Radius)
@@ -165,13 +169,6 @@ function Get-RoundedPath {
     $path.AddArc(0, $Height - $d, $d, $d, 90, 90)
     $path.CloseFigure()
     return $path
-}
-
-function Set-EsquinasRedondeadas {
-    param($Control, [int]$Radio = 10)
-    if ($Control.Width -le 0 -or $Control.Height -le 0) { return }
-    $path = Get-RoundedPath -Width $Control.Width -Height $Control.Height -Radius $Radio
-    $Control.Region = New-Object System.Drawing.Region($path)
 }
 
 # ==========================================================
@@ -219,25 +216,34 @@ $form.Add_Load({
     } catch {}
 })
 
-# Tarjeta con esquinas redondeadas (panel dentro de panel, con borde de 1px)
+# Tarjeta con esquinas redondeadas: un unico panel que dibuja su propio
+# fondo y borde redondeados en el evento Paint (sin usar Control.Region).
 function New-Tarjeta {
-    param([int]$X, [int]$Y, [int]$Ancho, [int]$Alto, [int]$Radio = 12)
-    $exterior = New-Object System.Windows.Forms.Panel
-    $exterior.Location = New-Object System.Drawing.Point($X, $Y)
-    $exterior.Size = New-Object System.Drawing.Size($Ancho, $Alto)
-    $exterior.BackColor = $colorBorde
-    $form.Controls.Add($exterior)
+    param([int]$X, [int]$Y, [int]$Ancho, [int]$Alto, [int]$Radio = 14)
+    $panel = New-Object System.Windows.Forms.Panel
+    $panel.Location = New-Object System.Drawing.Point($X, $Y)
+    $panel.Size = New-Object System.Drawing.Size($Ancho, $Alto)
+    $panel.BackColor = $colorFondo
+    $panel.Padding = New-Object System.Windows.Forms.Padding(4)
 
-    $interior = New-Object System.Windows.Forms.Panel
-    $interior.Location = New-Object System.Drawing.Point(1, 1)
-    $interior.Size = New-Object System.Drawing.Size(($Ancho - 2), ($Alto - 2))
-    $interior.BackColor = $colorTarjeta
-    $exterior.Controls.Add($interior)
+    $panel.Add_Paint({
+        param($sender, $e)
+        $e.Graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+        $ancho = $sender.Width - 1
+        $alto = $sender.Height - 1
+        if ($ancho -le 0 -or $alto -le 0) { return }
+        $path = Get-RoundedPath -Width $ancho -Height $alto -Radius $Radio
+        $brush = New-Object System.Drawing.SolidBrush($colorTarjeta)
+        $pen = New-Object System.Drawing.Pen($colorBorde, 1)
+        $e.Graphics.FillPath($brush, $path)
+        $e.Graphics.DrawPath($pen, $path)
+        $brush.Dispose()
+        $pen.Dispose()
+        $path.Dispose()
+    })
 
-    Set-EsquinasRedondeadas -Control $exterior -Radio $Radio
-    Set-EsquinasRedondeadas -Control $interior -Radio ($Radio - 1)
-
-    return @{ Exterior = $exterior; Interior = $interior }
+    $form.Controls.Add($panel)
+    return $panel
 }
 
 function New-BotonPrimario {
@@ -253,7 +259,6 @@ function New-BotonPrimario {
     $boton.Location = New-Object System.Drawing.Point($X, $Y)
     $boton.Size = New-Object System.Drawing.Size($Ancho, $Alto)
     $boton.UseVisualStyleBackColor = $false
-    Set-EsquinasRedondeadas -Control $boton -Radio 8
     return $boton
 }
 
@@ -271,7 +276,6 @@ function New-BotonSecundario {
     $boton.Location = New-Object System.Drawing.Point($X, $Y)
     $boton.Size = New-Object System.Drawing.Size($Ancho, $Alto)
     $boton.UseVisualStyleBackColor = $false
-    Set-EsquinasRedondeadas -Control $boton -Radio 8
     return $boton
 }
 
@@ -301,15 +305,14 @@ $lblSeccionRutas.AutoSize = $true
 $lblSeccionRutas.Location = New-Object System.Drawing.Point(28, 96)
 $form.Controls.Add($lblSeccionRutas)
 
-$tarjetaRutas = New-Tarjeta -X 28 -Y 126 -Ancho 490 -Alto 150
-$interiorRutas = $tarjetaRutas.Interior
+$panelRutas = New-Tarjeta -X 28 -Y 126 -Ancho 490 -Alto 150
 
 $lblGw = New-Object System.Windows.Forms.Label
 $lblGw.Text = "Gateway"
 $lblGw.ForeColor = $colorTexto
 $lblGw.AutoSize = $true
 $lblGw.Location = New-Object System.Drawing.Point(18, 22)
-$interiorRutas.Controls.Add($lblGw)
+$panelRutas.Controls.Add($lblGw)
 
 $txtGw = New-Object System.Windows.Forms.TextBox
 $txtGw.Font = $fontBase
@@ -318,20 +321,20 @@ $txtGw.BackColor = $colorTarjetaAlt
 $txtGw.ForeColor = $colorTexto
 $txtGw.Location = New-Object System.Drawing.Point(100, 18)
 $txtGw.Size = New-Object System.Drawing.Size(230, 28)
-$interiorRutas.Controls.Add($txtGw)
+$panelRutas.Controls.Add($txtGw)
 
 $btnDetectarGw = New-BotonSecundario -Texto "Detectar" -X 340 -Y 17 -Ancho 110 -Alto 30
-$interiorRutas.Controls.Add($btnDetectarGw)
+$panelRutas.Controls.Add($btnDetectarGw)
 
 $anchoBotonRuta = 149
 $btnAgregarRutas = New-BotonPrimario -Texto "Añadir" -X 18 -Y 70 -Ancho $anchoBotonRuta
-$interiorRutas.Controls.Add($btnAgregarRutas)
+$panelRutas.Controls.Add($btnAgregarRutas)
 
 $btnEliminarRutas = New-BotonSecundario -Texto "Eliminar" -X (18 + $anchoBotonRuta + 8) -Y 70 -Ancho $anchoBotonRuta
-$interiorRutas.Controls.Add($btnEliminarRutas)
+$panelRutas.Controls.Add($btnEliminarRutas)
 
 $btnComprobarRutas = New-BotonSecundario -Texto "Comprobar" -X (18 + ($anchoBotonRuta + 8) * 2) -Y 70 -Ancho $anchoBotonRuta
-$interiorRutas.Controls.Add($btnComprobarRutas)
+$panelRutas.Controls.Add($btnComprobarRutas)
 
 # --------------------- Tarjeta DNS ---------------------
 $lblSeccionDns = New-Object System.Windows.Forms.Label
@@ -342,15 +345,14 @@ $lblSeccionDns.AutoSize = $true
 $lblSeccionDns.Location = New-Object System.Drawing.Point(28, 292)
 $form.Controls.Add($lblSeccionDns)
 
-$tarjetaDns = New-Tarjeta -X 28 -Y 322 -Ancho 490 -Alto 175
-$interiorDns = $tarjetaDns.Interior
+$panelDns = New-Tarjeta -X 28 -Y 322 -Ancho 490 -Alto 175
 
 $lblAdaptador = New-Object System.Windows.Forms.Label
 $lblAdaptador.Text = "Adaptador"
 $lblAdaptador.ForeColor = $colorTexto
 $lblAdaptador.AutoSize = $true
 $lblAdaptador.Location = New-Object System.Drawing.Point(18, 22)
-$interiorDns.Controls.Add($lblAdaptador)
+$panelDns.Controls.Add($lblAdaptador)
 
 $cmbAdaptador = New-Object System.Windows.Forms.ComboBox
 $cmbAdaptador.Font = $fontBase
@@ -364,21 +366,21 @@ try {
     Get-Adaptadores | ForEach-Object { $cmbAdaptador.Items.Add($_) | Out-Null }
     if ($cmbAdaptador.Items.Count -gt 0) { $cmbAdaptador.SelectedIndex = 0 }
 } catch {}
-$interiorDns.Controls.Add($cmbAdaptador)
+$panelDns.Controls.Add($cmbAdaptador)
 
 $lblDnsInfo = New-Object System.Windows.Forms.Label
 $lblDnsInfo.Text = "Se aplicaran:`r`n" + ($ServidoresDns -join "   ->   ")
 $lblDnsInfo.ForeColor = $colorTextoSuave
 $lblDnsInfo.AutoSize = $true
 $lblDnsInfo.Location = New-Object System.Drawing.Point(18, 56)
-$interiorDns.Controls.Add($lblDnsInfo)
+$panelDns.Controls.Add($lblDnsInfo)
 
 $anchoBotonDns = 227
 $btnAplicarDns = New-BotonPrimario -Texto "Añadir DNS" -X 18 -Y 118 -Ancho $anchoBotonDns
-$interiorDns.Controls.Add($btnAplicarDns)
+$panelDns.Controls.Add($btnAplicarDns)
 
 $btnRestaurarDns = New-BotonSecundario -Texto "Restaurar DNS" -X (18 + $anchoBotonDns + 8) -Y 118 -Ancho $anchoBotonDns
-$interiorDns.Controls.Add($btnRestaurarDns)
+$panelDns.Controls.Add($btnRestaurarDns)
 
 # --------------------- Tarjeta Registro de actividad ---------------------
 $lblLog = New-Object System.Windows.Forms.Label
@@ -390,16 +392,9 @@ $lblLog.Anchor = "Top, Left"
 $lblLog.Location = New-Object System.Drawing.Point(28, 512)
 $form.Controls.Add($lblLog)
 
-$tarjetaLog = New-Tarjeta -X 28 -Y 542 -Ancho 490 -Alto 150
-$exteriorLog = $tarjetaLog.Exterior
-$interiorLog = $tarjetaLog.Interior
-$exteriorLog.Anchor = "Top, Left, Right, Bottom"
-
-$exteriorLog.Add_SizeChanged({
-    Set-EsquinasRedondeadas -Control $exteriorLog -Radio 12
-    $interiorLog.Size = New-Object System.Drawing.Size(($exteriorLog.Width - 2), ($exteriorLog.Height - 2))
-    Set-EsquinasRedondeadas -Control $interiorLog -Radio 11
-})
+$panelLog = New-Tarjeta -X 28 -Y 542 -Ancho 490 -Alto 150
+$panelLog.Anchor = "Top, Left, Right, Bottom"
+$panelLog.Padding = New-Object System.Windows.Forms.Padding(8)
 
 $dgvLog = New-Object System.Windows.Forms.DataGridView
 $dgvLog.Dock = "Fill"
@@ -426,7 +421,7 @@ $dgvLog.DefaultCellStyle.Padding = New-Object System.Windows.Forms.Padding(6, 0,
 $dgvLog.EnableHeadersVisualStyles = $false
 $dgvLog.ScrollBars = "Vertical"
 $dgvLog.AutoSizeColumnsMode = "Fill"
-$interiorLog.Controls.Add($dgvLog)
+$panelLog.Controls.Add($dgvLog)
 
 $colHora = New-Object System.Windows.Forms.DataGridViewTextBoxColumn
 $colHora.Name = "Hora"
