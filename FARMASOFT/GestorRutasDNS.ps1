@@ -268,10 +268,9 @@ function New-BotonSecundario {
     $boton.Text = $Texto
     $boton.Font = $fontBoton
     $boton.FlatStyle = "Flat"
-    $boton.FlatAppearance.BorderSize = 1
-    $boton.FlatAppearance.BorderColor = $colorBorde
-    $boton.FlatAppearance.MouseOverBackColor = $colorTarjetaAlt
-    $boton.BackColor = $colorTarjeta
+    $boton.FlatAppearance.BorderSize = 0
+    $boton.FlatAppearance.MouseOverBackColor = [System.Drawing.Color]::FromArgb(58, 58, 64)
+    $boton.BackColor = $colorTarjetaAlt
     $boton.ForeColor = $colorTexto
     $boton.Location = New-Object System.Drawing.Point($X, $Y)
     $boton.Size = New-Object System.Drawing.Size($Ancho, $Alto)
