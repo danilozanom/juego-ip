@@ -167,7 +167,7 @@ $lblLogoSub2.Location = New-Object System.Drawing.Point(210, 42)
 $form.Controls.Add($lblLogoSub2)
 
 $lblSubtitulo = New-Object System.Windows.Forms.Label
-$lblSubtitulo.Text = "Gestor de rutas y DNS"
+$lblSubtitulo.Text = "Gestor de DNS y Routes"
 $lblSubtitulo.ForeColor = [System.Drawing.Color]::Gray
 $lblSubtitulo.AutoSize = $true
 $lblSubtitulo.Location = New-Object System.Drawing.Point(32, 68)
