@@ -1,4 +1,4 @@
-﻿﻿﻿#requires -version 5.0
+﻿#requires -version 5.0
 <#
     FARMASOFT - Gestor de Rutas y DNS
     App con interfaz grafica (WinForms) para:
