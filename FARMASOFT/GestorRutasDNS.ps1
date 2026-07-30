@@ -53,6 +53,7 @@ $consoleHandle = [ConsoleHider.Win32]::GetConsoleWindow()
 $Rutas = @("172.16.0.0", "172.16.2.0", "172.16.4.0")
 $Mascara = "255.255.255.0"
 $ServidoresDns = @("172.16.4.100", "172.16.2.100", "172.16.0.100", "8.8.8.8")
+$ServidoresDnsPorDefecto = @("8.8.8.8", "1.1.1.1")
 
 # ==========================================================
 # Funciones de logica
@@ -106,8 +107,8 @@ function Set-DnsAdaptador {
 }
 
 function Reset-DnsAdaptador {
-    param([string]$Adaptador)
-    Set-DnsClientServerAddress -InterfaceAlias $Adaptador -ResetServerAddresses -ErrorAction Stop
+    param([string]$Adaptador, [string[]]$Servidores)
+    Set-DnsClientServerAddress -InterfaceAlias $Adaptador -ServerAddresses $Servidores -ErrorAction Stop
 }
 
 # ==========================================================
@@ -405,8 +406,8 @@ $btnRestaurarDns.Add_Click({
         return
     }
     try {
-        Reset-DnsAdaptador -Adaptador $cmbAdaptador.SelectedItem
-        Write-Log "DNS restaurado a DHCP en '$($cmbAdaptador.SelectedItem)'"
+        Reset-DnsAdaptador -Adaptador $cmbAdaptador.SelectedItem -Servidores $ServidoresDnsPorDefecto
+        Write-Log "DNS restaurado en '$($cmbAdaptador.SelectedItem)': $($ServidoresDnsPorDefecto -join ', ')"
     } catch {
         Write-Log "Error al restaurar DNS: $_"
     }
