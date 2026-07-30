@@ -58,34 +58,55 @@ $ServidoresDnsPorDefecto = @("8.8.8.8", "1.1.1.1")
 # ==========================================================
 # Funciones de logica
 # ==========================================================
+function Test-IPv4 {
+    param([string]$Ip)
+    if ($Ip -notmatch '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$') { return $false }
+    foreach ($octeto in ($Ip -split '\.')) {
+        if ([int]$octeto -gt 255) { return $false }
+    }
+    return $true
+}
+
 function Get-RouteExists {
     param([string]$Destino)
-    $salida = route print | Select-String -SimpleMatch $Destino
-    return [bool]$salida
+    try {
+        $salida = route print | Select-String -SimpleMatch $Destino
+        return [bool]$salida
+    } catch {
+        return $false
+    }
 }
 
 function Add-RutaEstatica {
     param([string]$Destino, [string]$Gateway)
-    if (Get-RouteExists -Destino $Destino) {
-        return "Ya existia"
+    try {
+        if (Get-RouteExists -Destino $Destino) {
+            return "Ya existia"
+        }
+        $resultado = route -p add $Destino mask $Mascara $Gateway 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            return "Error: $resultado"
+        }
+        return "Agregada"
+    } catch {
+        return "Error: $_"
     }
-    $resultado = route -p add $Destino mask $Mascara $Gateway 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        return "Error: $resultado"
-    }
-    return "Agregada"
 }
 
 function Remove-RutaEstatica {
     param([string]$Destino)
-    if (-not (Get-RouteExists -Destino $Destino)) {
-        return "No existia"
+    try {
+        if (-not (Get-RouteExists -Destino $Destino)) {
+            return "No existia"
+        }
+        $resultado = route delete $Destino 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            return "Error: $resultado"
+        }
+        return "Eliminada"
+    } catch {
+        return "Error: $_"
     }
-    $resultado = route delete $Destino 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        return "Error: $resultado"
-    }
-    return "Eliminada"
 }
 
 function Get-Adaptadores {
@@ -144,6 +165,7 @@ $colorAccentoOsc = [System.Drawing.Color]::FromArgb(62, 55, 190)
 $colorTexto      = [System.Drawing.Color]::FromArgb(30, 33, 42)
 $colorTextoSuave = [System.Drawing.Color]::FromArgb(107, 114, 128)
 $colorOk         = [System.Drawing.Color]::FromArgb(22, 163, 74)
+$colorEliminado  = [System.Drawing.Color]::FromArgb(217, 119, 6)
 $colorError      = [System.Drawing.Color]::FromArgb(220, 38, 38)
 $colorAviso      = [System.Drawing.Color]::FromArgb(156, 163, 175)
 
@@ -403,8 +425,10 @@ $dgvLog.Add_CellFormatting({
     $valor = [string]$e.Value
     if ($valor -match "Error") {
         $e.CellStyle.ForeColor = $colorError
-    } elseif ($valor -match "Agregada|Aplicado|Eliminada|Restaurado|^Existe$") {
+    } elseif ($valor -match "Agregada|Aplicado|Restaurado|^Existe$") {
         $e.CellStyle.ForeColor = $colorOk
+    } elseif ($valor -match "Eliminada") {
+        $e.CellStyle.ForeColor = $colorEliminado
     } elseif ($valor -match "Ya existia|No existia|No existe") {
         $e.CellStyle.ForeColor = $colorAviso
     } else {
@@ -421,39 +445,59 @@ function Write-Log {
 
 # --------------------- Eventos ---------------------
 $btnDetectarGw.Add_Click({
-    $gwDetectada = Get-GatewayPredeterminada
-    if ($gwDetectada) {
-        $txtGw.Text = $gwDetectada
-    } else {
-        [System.Windows.Forms.MessageBox]::Show("No se pudo detectar la Gateway automaticamente.", "FARMASOFT", "OK", "Warning")
+    try {
+        $gwDetectada = Get-GatewayPredeterminada
+        if ($gwDetectada) {
+            $txtGw.Text = $gwDetectada
+        } else {
+            [System.Windows.Forms.MessageBox]::Show("No se pudo detectar la Gateway automaticamente.", "FARMASOFT", "OK", "Warning")
+        }
+    } catch {
+        Write-Log -Evento "Detectar Gateway: $_" -Estado "Error"
     }
 })
 
 $btnAgregarRutas.Add_Click({
-    if ([string]::IsNullOrWhiteSpace($txtGw.Text)) {
-        [System.Windows.Forms.MessageBox]::Show("Introduce una Gateway valida.", "FARMASOFT", "OK", "Warning")
-        return
-    }
-    foreach ($ruta in $Rutas) {
-        $estado = Add-RutaEstatica -Destino $ruta -Gateway $txtGw.Text
-        Write-Log -Evento "Ruta $ruta" -Estado $estado
+    try {
+        if ([string]::IsNullOrWhiteSpace($txtGw.Text)) {
+            [System.Windows.Forms.MessageBox]::Show("Introduce una Gateway valida.", "FARMASOFT", "OK", "Warning")
+            return
+        }
+        if (-not (Test-IPv4 $txtGw.Text)) {
+            [System.Windows.Forms.MessageBox]::Show("La Gateway introducida no es una IPv4 valida.", "FARMASOFT", "OK", "Warning")
+            return
+        }
+        foreach ($ruta in $Rutas) {
+            $estado = Add-RutaEstatica -Destino $ruta -Gateway $txtGw.Text
+            Write-Log -Evento "Ruta $ruta" -Estado $estado
+        }
+    } catch {
+        Write-Log -Evento "Añadir rutas: $_" -Estado "Error"
     }
 })
 
 $btnEliminarRutas.Add_Click({
-    foreach ($ruta in $Rutas) {
-        $estado = Remove-RutaEstatica -Destino $ruta
-        Write-Log -Evento "Ruta $ruta" -Estado $estado
+    try {
+        foreach ($ruta in $Rutas) {
+            $estado = Remove-RutaEstatica -Destino $ruta
+            Write-Log -Evento "Ruta $ruta" -Estado $estado
+        }
+    } catch {
+        Write-Log -Evento "Eliminar rutas: $_" -Estado "Error"
     }
 })
 
 $btnComprobarRutas.Add_Click({
-    foreach ($ruta in $Rutas) {
-        if (Get-RouteExists -Destino $ruta) {
-            Write-Log -Evento "Ruta $ruta" -Estado "Existe"
-        } else {
-            Write-Log -Evento "Ruta $ruta" -Estado "No existe"
+    try {
+        foreach ($ruta in $Rutas) {
+            if (Get-RouteExists -Destino $ruta) {
+                Write-Log -Evento "Ruta $ruta" -Estado "Existe"
+            } else {
+                Write-Log -Evento "Ruta $ruta" -Estado "No existe"
+            }
         }
+    } catch {
+        Write-Log -Evento "Comprobar rutas: $_" -Estado "Error"
     }
 })
 
