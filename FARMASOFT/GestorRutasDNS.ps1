@@ -93,6 +93,19 @@ function Get-Adaptadores {
 }
 
 function Get-GatewayPredeterminada {
+    # Las farmacias tienen dos redes IPv4 (192.x y 172.x). La puerta de enlace
+    # del equipo suele ser la 192.x, pero las rutas necesitan la gateway de la
+    # red 172.x: se detecta la IP local que empieza por 172. y se cambia el
+    # ultimo octeto por 1.
+    $ip172 = Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+        Where-Object { $_.IPAddress -like "172.*" } |
+        Select-Object -First 1
+    if ($ip172) {
+        $octetos = $ip172.IPAddress -split "\."
+        $octetos[3] = "1"
+        return ($octetos -join ".")
+    }
+
     $ruta = Get-NetRoute -DestinationPrefix "0.0.0.0/0" -ErrorAction SilentlyContinue |
         Where-Object { $_.NextHop -ne "0.0.0.0" } |
         Sort-Object -Property RouteMetric |
