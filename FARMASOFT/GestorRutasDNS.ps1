@@ -40,6 +40,11 @@ Add-Type -Name Win32 -Namespace ConsoleHider -MemberDefinition '
 $consoleHandle = [ConsoleHider.Win32]::GetConsoleWindow()
 [ConsoleHider.Win32]::ShowWindow($consoleHandle, 0) | Out-Null
 
+Add-Type -Name DwmApi -Namespace WinApi -MemberDefinition '
+    [DllImport("dwmapi.dll")]
+    public static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
+'
+
 # ==========================================================
 # Evitar que Windows escale mal la interfaz (letras borrosas/enormes)
 # ==========================================================
@@ -146,28 +151,51 @@ function Reset-DnsAdaptador {
 }
 
 # ==========================================================
-# Paleta y tipografia
+# Esquinas redondeadas (estilo Windows 11 / Fluent)
 # ==========================================================
-$fontBase    = New-Object System.Drawing.Font("Segoe UI", 10)
-$fontTitulo  = New-Object System.Drawing.Font("Segoe UI", 20, [System.Drawing.FontStyle]::Bold)
-$fontSub     = New-Object System.Drawing.Font("Segoe UI", 10)
-$fontSeccion = New-Object System.Drawing.Font("Segoe UI", 11, [System.Drawing.FontStyle]::Bold)
-$fontBoton   = New-Object System.Drawing.Font("Segoe UI", 9.5, [System.Drawing.FontStyle]::Bold)
-$fontLog     = New-Object System.Drawing.Font("Segoe UI", 9.5)
-$fontLogEstado = New-Object System.Drawing.Font("Segoe UI", 9.5, [System.Drawing.FontStyle]::Bold)
+function Get-RoundedPath {
+    param([int]$Width, [int]$Height, [int]$Radius)
+    $d = $Radius * 2
+    if ($d -gt $Width) { $d = $Width }
+    if ($d -gt $Height) { $d = $Height }
+    $path = New-Object System.Drawing.Drawing2D.GraphicsPath
+    $path.AddArc(0, 0, $d, $d, 180, 90)
+    $path.AddArc($Width - $d, 0, $d, $d, 270, 90)
+    $path.AddArc($Width - $d, $Height - $d, $d, $d, 0, 90)
+    $path.AddArc(0, $Height - $d, $d, $d, 90, 90)
+    $path.CloseFigure()
+    return $path
+}
 
-# Paleta indigo/verde-azulado, mas moderna que la anterior
-$colorFondo      = [System.Drawing.Color]::FromArgb(241, 243, 247)
-$colorTarjeta    = [System.Drawing.Color]::White
-$colorBorde      = [System.Drawing.Color]::FromArgb(225, 228, 235)
-$colorAccento    = [System.Drawing.Color]::FromArgb(79, 70, 229)
-$colorAccentoOsc = [System.Drawing.Color]::FromArgb(62, 55, 190)
-$colorTexto      = [System.Drawing.Color]::FromArgb(30, 33, 42)
-$colorTextoSuave = [System.Drawing.Color]::FromArgb(107, 114, 128)
-$colorOk         = [System.Drawing.Color]::FromArgb(22, 163, 74)
-$colorEliminado  = [System.Drawing.Color]::FromArgb(217, 119, 6)
-$colorError      = [System.Drawing.Color]::FromArgb(220, 38, 38)
-$colorAviso      = [System.Drawing.Color]::FromArgb(156, 163, 175)
+function Set-EsquinasRedondeadas {
+    param($Control, [int]$Radio = 10)
+    if ($Control.Width -le 0 -or $Control.Height -le 0) { return }
+    $path = Get-RoundedPath -Width $Control.Width -Height $Control.Height -Radius $Radio
+    $Control.Region = New-Object System.Drawing.Region($path)
+}
+
+# ==========================================================
+# Paleta oscura minimalista (Fluent / Windows 11 dark)
+# ==========================================================
+$fontBase      = New-Object System.Drawing.Font("Segoe UI", 10)
+$fontTitulo    = New-Object System.Drawing.Font("Segoe UI Semibold", 20)
+$fontSub       = New-Object System.Drawing.Font("Segoe UI", 10)
+$fontSeccion   = New-Object System.Drawing.Font("Segoe UI Semibold", 11)
+$fontBoton     = New-Object System.Drawing.Font("Segoe UI", 9.5)
+$fontLog       = New-Object System.Drawing.Font("Segoe UI", 9.5)
+$fontLogEstado = New-Object System.Drawing.Font("Segoe UI Semibold", 9.5)
+
+$colorFondo      = [System.Drawing.Color]::FromArgb(24, 24, 27)
+$colorTarjeta    = [System.Drawing.Color]::FromArgb(34, 34, 38)
+$colorTarjetaAlt = [System.Drawing.Color]::FromArgb(42, 42, 47)
+$colorBorde      = [System.Drawing.Color]::FromArgb(54, 54, 60)
+$colorAccento    = [System.Drawing.Color]::FromArgb(90, 140, 255)
+$colorTexto      = [System.Drawing.Color]::FromArgb(235, 235, 240)
+$colorTextoSuave = [System.Drawing.Color]::FromArgb(148, 148, 158)
+$colorOk         = [System.Drawing.Color]::FromArgb(98, 189, 128)
+$colorEliminado  = [System.Drawing.Color]::FromArgb(224, 168, 92)
+$colorError      = [System.Drawing.Color]::FromArgb(226, 108, 108)
+$colorAviso      = [System.Drawing.Color]::FromArgb(130, 130, 140)
 
 # ==========================================================
 # Formulario principal
@@ -184,9 +212,16 @@ $form.Font = $fontBase
 $form.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Font
 $form.AutoScaleDimensions = New-Object System.Drawing.SizeF(96.0, 96.0)
 
-# Ayuda para crear una "tarjeta" con borde de 1px de color (panel dentro de panel)
+$form.Add_Load({
+    try {
+        $valorOscuro = 1
+        [WinApi.DwmApi]::DwmSetWindowAttribute($form.Handle, 20, [ref]$valorOscuro, 4) | Out-Null
+    } catch {}
+})
+
+# Tarjeta con esquinas redondeadas (panel dentro de panel, con borde de 1px)
 function New-Tarjeta {
-    param([int]$X, [int]$Y, [int]$Ancho, [int]$Alto)
+    param([int]$X, [int]$Y, [int]$Ancho, [int]$Alto, [int]$Radio = 12)
     $exterior = New-Object System.Windows.Forms.Panel
     $exterior.Location = New-Object System.Drawing.Point($X, $Y)
     $exterior.Size = New-Object System.Drawing.Size($Ancho, $Alto)
@@ -199,14 +234,52 @@ function New-Tarjeta {
     $interior.BackColor = $colorTarjeta
     $exterior.Controls.Add($interior)
 
+    Set-EsquinasRedondeadas -Control $exterior -Radio $Radio
+    Set-EsquinasRedondeadas -Control $interior -Radio ($Radio - 1)
+
     return @{ Exterior = $exterior; Interior = $interior }
+}
+
+function New-BotonPrimario {
+    param([string]$Texto, [int]$X, [int]$Y, [int]$Ancho, [int]$Alto = 40)
+    $boton = New-Object System.Windows.Forms.Button
+    $boton.Text = $Texto
+    $boton.Font = $fontBoton
+    $boton.FlatStyle = "Flat"
+    $boton.FlatAppearance.BorderSize = 0
+    $boton.FlatAppearance.MouseOverBackColor = [System.Drawing.Color]::FromArgb(110, 156, 255)
+    $boton.BackColor = $colorAccento
+    $boton.ForeColor = [System.Drawing.Color]::White
+    $boton.Location = New-Object System.Drawing.Point($X, $Y)
+    $boton.Size = New-Object System.Drawing.Size($Ancho, $Alto)
+    $boton.UseVisualStyleBackColor = $false
+    Set-EsquinasRedondeadas -Control $boton -Radio 8
+    return $boton
+}
+
+function New-BotonSecundario {
+    param([string]$Texto, [int]$X, [int]$Y, [int]$Ancho, [int]$Alto = 40)
+    $boton = New-Object System.Windows.Forms.Button
+    $boton.Text = $Texto
+    $boton.Font = $fontBoton
+    $boton.FlatStyle = "Flat"
+    $boton.FlatAppearance.BorderSize = 1
+    $boton.FlatAppearance.BorderColor = $colorBorde
+    $boton.FlatAppearance.MouseOverBackColor = $colorTarjetaAlt
+    $boton.BackColor = $colorTarjeta
+    $boton.ForeColor = $colorTexto
+    $boton.Location = New-Object System.Drawing.Point($X, $Y)
+    $boton.Size = New-Object System.Drawing.Size($Ancho, $Alto)
+    $boton.UseVisualStyleBackColor = $false
+    Set-EsquinasRedondeadas -Control $boton -Radio 8
+    return $boton
 }
 
 # --------------------- Cabecera ---------------------
 $lblTitulo = New-Object System.Windows.Forms.Label
 $lblTitulo.Text = "Farmasoft"
 $lblTitulo.Font = $fontTitulo
-$lblTitulo.ForeColor = $colorAccento
+$lblTitulo.ForeColor = $colorTexto
 $lblTitulo.AutoSize = $true
 $lblTitulo.Location = New-Object System.Drawing.Point(28, 22)
 $form.Controls.Add($lblTitulo)
@@ -223,7 +296,7 @@ $form.Controls.Add($lblSubtitulo)
 $lblSeccionRutas = New-Object System.Windows.Forms.Label
 $lblSeccionRutas.Text = "RUTAS"
 $lblSeccionRutas.Font = $fontSeccion
-$lblSeccionRutas.ForeColor = $colorTexto
+$lblSeccionRutas.ForeColor = $colorTextoSuave
 $lblSeccionRutas.AutoSize = $true
 $lblSeccionRutas.Location = New-Object System.Drawing.Point(28, 96)
 $form.Controls.Add($lblSeccionRutas)
@@ -240,67 +313,31 @@ $interiorRutas.Controls.Add($lblGw)
 
 $txtGw = New-Object System.Windows.Forms.TextBox
 $txtGw.Font = $fontBase
+$txtGw.BorderStyle = "FixedSingle"
+$txtGw.BackColor = $colorTarjetaAlt
+$txtGw.ForeColor = $colorTexto
 $txtGw.Location = New-Object System.Drawing.Point(100, 18)
 $txtGw.Size = New-Object System.Drawing.Size(230, 28)
 $interiorRutas.Controls.Add($txtGw)
 
-$btnDetectarGw = New-Object System.Windows.Forms.Button
-$btnDetectarGw.Text = "Detectar"
-$btnDetectarGw.Font = $fontBoton
-$btnDetectarGw.FlatStyle = "Flat"
-$btnDetectarGw.FlatAppearance.BorderSize = 1
-$btnDetectarGw.FlatAppearance.BorderColor = $colorAccento
-$btnDetectarGw.BackColor = [System.Drawing.Color]::White
-$btnDetectarGw.ForeColor = $colorAccento
-$btnDetectarGw.Location = New-Object System.Drawing.Point(340, 17)
-$btnDetectarGw.Size = New-Object System.Drawing.Size(110, 30)
-$btnDetectarGw.UseVisualStyleBackColor = $false
+$btnDetectarGw = New-BotonSecundario -Texto "Detectar" -X 340 -Y 17 -Ancho 110 -Alto 30
 $interiorRutas.Controls.Add($btnDetectarGw)
 
 $anchoBotonRuta = 149
-$btnAgregarRutas = New-Object System.Windows.Forms.Button
-$btnAgregarRutas.Text = "Añadir"
-$btnAgregarRutas.Font = $fontBoton
-$btnAgregarRutas.FlatStyle = "Flat"
-$btnAgregarRutas.FlatAppearance.BorderSize = 0
-$btnAgregarRutas.BackColor = $colorAccento
-$btnAgregarRutas.ForeColor = [System.Drawing.Color]::White
-$btnAgregarRutas.Location = New-Object System.Drawing.Point(18, 70)
-$btnAgregarRutas.Size = New-Object System.Drawing.Size($anchoBotonRuta, 40)
-$btnAgregarRutas.UseVisualStyleBackColor = $false
+$btnAgregarRutas = New-BotonPrimario -Texto "Añadir" -X 18 -Y 70 -Ancho $anchoBotonRuta
 $interiorRutas.Controls.Add($btnAgregarRutas)
 
-$btnEliminarRutas = New-Object System.Windows.Forms.Button
-$btnEliminarRutas.Text = "Eliminar"
-$btnEliminarRutas.Font = $fontBoton
-$btnEliminarRutas.FlatStyle = "Flat"
-$btnEliminarRutas.FlatAppearance.BorderSize = 1
-$btnEliminarRutas.FlatAppearance.BorderColor = $colorAccento
-$btnEliminarRutas.BackColor = [System.Drawing.Color]::White
-$btnEliminarRutas.ForeColor = $colorAccento
-$btnEliminarRutas.Location = New-Object System.Drawing.Point((18 + $anchoBotonRuta + 8), 70)
-$btnEliminarRutas.Size = New-Object System.Drawing.Size($anchoBotonRuta, 40)
-$btnEliminarRutas.UseVisualStyleBackColor = $false
+$btnEliminarRutas = New-BotonSecundario -Texto "Eliminar" -X (18 + $anchoBotonRuta + 8) -Y 70 -Ancho $anchoBotonRuta
 $interiorRutas.Controls.Add($btnEliminarRutas)
 
-$btnComprobarRutas = New-Object System.Windows.Forms.Button
-$btnComprobarRutas.Text = "Comprobar"
-$btnComprobarRutas.Font = $fontBoton
-$btnComprobarRutas.FlatStyle = "Flat"
-$btnComprobarRutas.FlatAppearance.BorderSize = 1
-$btnComprobarRutas.FlatAppearance.BorderColor = $colorBorde
-$btnComprobarRutas.BackColor = [System.Drawing.Color]::White
-$btnComprobarRutas.ForeColor = $colorTextoSuave
-$btnComprobarRutas.Location = New-Object System.Drawing.Point((18 + ($anchoBotonRuta + 8) * 2), 70)
-$btnComprobarRutas.Size = New-Object System.Drawing.Size($anchoBotonRuta, 40)
-$btnComprobarRutas.UseVisualStyleBackColor = $false
+$btnComprobarRutas = New-BotonSecundario -Texto "Comprobar" -X (18 + ($anchoBotonRuta + 8) * 2) -Y 70 -Ancho $anchoBotonRuta
 $interiorRutas.Controls.Add($btnComprobarRutas)
 
 # --------------------- Tarjeta DNS ---------------------
 $lblSeccionDns = New-Object System.Windows.Forms.Label
 $lblSeccionDns.Text = "DNS"
 $lblSeccionDns.Font = $fontSeccion
-$lblSeccionDns.ForeColor = $colorTexto
+$lblSeccionDns.ForeColor = $colorTextoSuave
 $lblSeccionDns.AutoSize = $true
 $lblSeccionDns.Location = New-Object System.Drawing.Point(28, 292)
 $form.Controls.Add($lblSeccionDns)
@@ -317,6 +354,9 @@ $interiorDns.Controls.Add($lblAdaptador)
 
 $cmbAdaptador = New-Object System.Windows.Forms.ComboBox
 $cmbAdaptador.Font = $fontBase
+$cmbAdaptador.FlatStyle = "Flat"
+$cmbAdaptador.BackColor = $colorTarjetaAlt
+$cmbAdaptador.ForeColor = $colorTexto
 $cmbAdaptador.Location = New-Object System.Drawing.Point(100, 18)
 $cmbAdaptador.Size = New-Object System.Drawing.Size(350, 28)
 $cmbAdaptador.DropDownStyle = "DropDownList"
@@ -334,36 +374,17 @@ $lblDnsInfo.Location = New-Object System.Drawing.Point(18, 56)
 $interiorDns.Controls.Add($lblDnsInfo)
 
 $anchoBotonDns = 227
-$btnAplicarDns = New-Object System.Windows.Forms.Button
-$btnAplicarDns.Text = "Añadir DNS"
-$btnAplicarDns.Font = $fontBoton
-$btnAplicarDns.FlatStyle = "Flat"
-$btnAplicarDns.FlatAppearance.BorderSize = 0
-$btnAplicarDns.BackColor = $colorAccento
-$btnAplicarDns.ForeColor = [System.Drawing.Color]::White
-$btnAplicarDns.Location = New-Object System.Drawing.Point(18, 118)
-$btnAplicarDns.Size = New-Object System.Drawing.Size($anchoBotonDns, 40)
-$btnAplicarDns.UseVisualStyleBackColor = $false
+$btnAplicarDns = New-BotonPrimario -Texto "Añadir DNS" -X 18 -Y 118 -Ancho $anchoBotonDns
 $interiorDns.Controls.Add($btnAplicarDns)
 
-$btnRestaurarDns = New-Object System.Windows.Forms.Button
-$btnRestaurarDns.Text = "Restaurar DNS"
-$btnRestaurarDns.Font = $fontBoton
-$btnRestaurarDns.FlatStyle = "Flat"
-$btnRestaurarDns.FlatAppearance.BorderSize = 1
-$btnRestaurarDns.FlatAppearance.BorderColor = $colorAccento
-$btnRestaurarDns.BackColor = [System.Drawing.Color]::White
-$btnRestaurarDns.ForeColor = $colorAccento
-$btnRestaurarDns.Location = New-Object System.Drawing.Point((18 + $anchoBotonDns + 8), 118)
-$btnRestaurarDns.Size = New-Object System.Drawing.Size($anchoBotonDns, 40)
-$btnRestaurarDns.UseVisualStyleBackColor = $false
+$btnRestaurarDns = New-BotonSecundario -Texto "Restaurar DNS" -X (18 + $anchoBotonDns + 8) -Y 118 -Ancho $anchoBotonDns
 $interiorDns.Controls.Add($btnRestaurarDns)
 
 # --------------------- Tarjeta Registro de actividad ---------------------
 $lblLog = New-Object System.Windows.Forms.Label
 $lblLog.Text = "REGISTRO DE ACTIVIDAD"
 $lblLog.Font = $fontSeccion
-$lblLog.ForeColor = $colorTexto
+$lblLog.ForeColor = $colorTextoSuave
 $lblLog.AutoSize = $true
 $lblLog.Anchor = "Top, Left"
 $lblLog.Location = New-Object System.Drawing.Point(28, 512)
@@ -374,9 +395,15 @@ $exteriorLog = $tarjetaLog.Exterior
 $interiorLog = $tarjetaLog.Interior
 $exteriorLog.Anchor = "Top, Left, Right, Bottom"
 
+$exteriorLog.Add_SizeChanged({
+    Set-EsquinasRedondeadas -Control $exteriorLog -Radio 12
+    $interiorLog.Size = New-Object System.Drawing.Size(($exteriorLog.Width - 2), ($exteriorLog.Height - 2))
+    Set-EsquinasRedondeadas -Control $interiorLog -Radio 11
+})
+
 $dgvLog = New-Object System.Windows.Forms.DataGridView
 $dgvLog.Dock = "Fill"
-$dgvLog.BackgroundColor = [System.Drawing.Color]::White
+$dgvLog.BackgroundColor = $colorTarjeta
 $dgvLog.BorderStyle = "None"
 $dgvLog.Font = $fontLog
 $dgvLog.ColumnHeadersVisible = $false
@@ -389,9 +416,11 @@ $dgvLog.ReadOnly = $true
 $dgvLog.MultiSelect = $false
 $dgvLog.SelectionMode = "FullRowSelect"
 $dgvLog.CellBorderStyle = "SingleHorizontal"
-$dgvLog.GridColor = [System.Drawing.Color]::FromArgb(235, 236, 238)
+$dgvLog.GridColor = $colorBorde
 $dgvLog.RowTemplate.Height = 28
-$dgvLog.DefaultCellStyle.SelectionBackColor = [System.Drawing.Color]::FromArgb(238, 237, 253)
+$dgvLog.DefaultCellStyle.BackColor = $colorTarjeta
+$dgvLog.DefaultCellStyle.ForeColor = $colorTexto
+$dgvLog.DefaultCellStyle.SelectionBackColor = $colorTarjetaAlt
 $dgvLog.DefaultCellStyle.SelectionForeColor = $colorTexto
 $dgvLog.DefaultCellStyle.Padding = New-Object System.Windows.Forms.Padding(6, 0, 6, 0)
 $dgvLog.EnableHeadersVisualStyles = $false
@@ -403,6 +432,7 @@ $colHora = New-Object System.Windows.Forms.DataGridViewTextBoxColumn
 $colHora.Name = "Hora"
 $colHora.FillWeight = 15
 $colHora.SortMode = "NotSortable"
+$colHora.DefaultCellStyle.ForeColor = $colorTextoSuave
 $dgvLog.Columns.Add($colHora) | Out-Null
 
 $colEvento = New-Object System.Windows.Forms.DataGridViewTextBoxColumn
