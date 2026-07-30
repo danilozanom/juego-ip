@@ -175,12 +175,12 @@ function Get-RoundedPath {
 # Paleta oscura minimalista (Fluent / Windows 11 dark)
 # ==========================================================
 $fontBase      = New-Object System.Drawing.Font("Segoe UI", 10)
-$fontTitulo    = New-Object System.Drawing.Font("Segoe UI Semibold", 20)
+$fontTitulo    = New-Object System.Drawing.Font("Segoe UI", 22, [System.Drawing.FontStyle]::Bold)
 $fontSub       = New-Object System.Drawing.Font("Segoe UI", 10)
-$fontSeccion   = New-Object System.Drawing.Font("Segoe UI Semibold", 11)
-$fontBoton     = New-Object System.Drawing.Font("Segoe UI", 9.5)
+$fontSeccion   = New-Object System.Drawing.Font("Segoe UI", 11, [System.Drawing.FontStyle]::Bold)
+$fontBoton     = New-Object System.Drawing.Font("Segoe UI", 9.5, [System.Drawing.FontStyle]::Bold)
 $fontLog       = New-Object System.Drawing.Font("Segoe UI", 9.5)
-$fontLogEstado = New-Object System.Drawing.Font("Segoe UI Semibold", 9.5)
+$fontLogEstado = New-Object System.Drawing.Font("Segoe UI", 9.5, [System.Drawing.FontStyle]::Bold)
 
 $colorFondo      = [System.Drawing.Color]::FromArgb(24, 24, 27)
 $colorTarjeta    = [System.Drawing.Color]::FromArgb(34, 34, 38)
