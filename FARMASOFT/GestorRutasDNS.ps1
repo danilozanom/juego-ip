@@ -132,7 +132,7 @@ $colorAviso    = [System.Drawing.Color]::FromArgb(150, 150, 150)
 
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "FARMASOFT"
-$form.Size = New-Object System.Drawing.Size(520, 660)
+$form.Size = New-Object System.Drawing.Size(520, 740)
 $form.StartPosition = "CenterScreen"
 $form.FormBorderStyle = "FixedDialog"
 $form.MaximizeBox = $false
@@ -242,25 +242,38 @@ $btnEliminarRutas.Size = New-Object System.Drawing.Size(222, 42)
 $btnEliminarRutas.UseVisualStyleBackColor = $false
 $form.Controls.Add($btnEliminarRutas)
 
+$btnComprobarRutas = New-Object System.Windows.Forms.Button
+$btnComprobarRutas.Text = "Comprobar rutas"
+$btnComprobarRutas.Font = $fontBoton
+$btnComprobarRutas.FlatStyle = "Flat"
+$btnComprobarRutas.FlatAppearance.BorderSize = 1
+$btnComprobarRutas.FlatAppearance.BorderColor = $colorAccento
+$btnComprobarRutas.BackColor = [System.Drawing.Color]::White
+$btnComprobarRutas.ForeColor = $colorAccento
+$btnComprobarRutas.Location = New-Object System.Drawing.Point(30, 245)
+$btnComprobarRutas.Size = New-Object System.Drawing.Size(460, 38)
+$btnComprobarRutas.UseVisualStyleBackColor = $false
+$form.Controls.Add($btnComprobarRutas)
+
 # --------------------- Seccion DNS ---------------------
 $lblSeccionDns = New-Object System.Windows.Forms.Label
 $lblSeccionDns.Text = "DNS"
 $lblSeccionDns.Font = $fontBoton
 $lblSeccionDns.ForeColor = $colorTexto
 $lblSeccionDns.AutoSize = $true
-$lblSeccionDns.Location = New-Object System.Drawing.Point(30, 260)
+$lblSeccionDns.Location = New-Object System.Drawing.Point(30, 300)
 $form.Controls.Add($lblSeccionDns)
 
 $lblAdaptador = New-Object System.Windows.Forms.Label
 $lblAdaptador.Text = "Adaptador"
 $lblAdaptador.ForeColor = $colorTexto
 $lblAdaptador.AutoSize = $true
-$lblAdaptador.Location = New-Object System.Drawing.Point(30, 298)
+$lblAdaptador.Location = New-Object System.Drawing.Point(30, 338)
 $form.Controls.Add($lblAdaptador)
 
 $cmbAdaptador = New-Object System.Windows.Forms.ComboBox
 $cmbAdaptador.Font = $fontBase
-$cmbAdaptador.Location = New-Object System.Drawing.Point(125, 294)
+$cmbAdaptador.Location = New-Object System.Drawing.Point(125, 334)
 $cmbAdaptador.Size = New-Object System.Drawing.Size(335, 28)
 $cmbAdaptador.DropDownStyle = "DropDownList"
 try {
@@ -273,7 +286,7 @@ $lblDnsInfo = New-Object System.Windows.Forms.Label
 $lblDnsInfo.Text = "Se aplicaran:`r`n" + ($ServidoresDns -join "  ->  ")
 $lblDnsInfo.ForeColor = [System.Drawing.Color]::Gray
 $lblDnsInfo.AutoSize = $true
-$lblDnsInfo.Location = New-Object System.Drawing.Point(30, 332)
+$lblDnsInfo.Location = New-Object System.Drawing.Point(30, 372)
 $form.Controls.Add($lblDnsInfo)
 
 $btnAplicarDns = New-Object System.Windows.Forms.Button
@@ -283,7 +296,7 @@ $btnAplicarDns.FlatStyle = "Flat"
 $btnAplicarDns.FlatAppearance.BorderSize = 0
 $btnAplicarDns.BackColor = $colorAccento
 $btnAplicarDns.ForeColor = [System.Drawing.Color]::White
-$btnAplicarDns.Location = New-Object System.Drawing.Point(30, 400)
+$btnAplicarDns.Location = New-Object System.Drawing.Point(30, 440)
 $btnAplicarDns.Size = New-Object System.Drawing.Size(222, 42)
 $btnAplicarDns.UseVisualStyleBackColor = $false
 $form.Controls.Add($btnAplicarDns)
@@ -296,7 +309,7 @@ $btnRestaurarDns.FlatAppearance.BorderSize = 1
 $btnRestaurarDns.FlatAppearance.BorderColor = $colorAccento
 $btnRestaurarDns.BackColor = [System.Drawing.Color]::White
 $btnRestaurarDns.ForeColor = $colorAccento
-$btnRestaurarDns.Location = New-Object System.Drawing.Point(268, 400)
+$btnRestaurarDns.Location = New-Object System.Drawing.Point(268, 440)
 $btnRestaurarDns.Size = New-Object System.Drawing.Size(222, 42)
 $btnRestaurarDns.UseVisualStyleBackColor = $false
 $form.Controls.Add($btnRestaurarDns)
@@ -307,47 +320,81 @@ $lblLog.Text = "Registro de actividad"
 $lblLog.Font = $fontBoton
 $lblLog.ForeColor = $colorTexto
 $lblLog.AutoSize = $true
-$lblLog.Location = New-Object System.Drawing.Point(30, 460)
+$lblLog.Location = New-Object System.Drawing.Point(30, 500)
 $form.Controls.Add($lblLog)
 
 $panelLog = New-Object System.Windows.Forms.Panel
-$panelLog.Location = New-Object System.Drawing.Point(30, 490)
-$panelLog.Size = New-Object System.Drawing.Size(460, 140)
+$panelLog.Location = New-Object System.Drawing.Point(30, 530)
+$panelLog.Size = New-Object System.Drawing.Size(460, 150)
 $panelLog.BackColor = [System.Drawing.Color]::FromArgb(215, 218, 222)
 $form.Controls.Add($panelLog)
 
-$rtbLog = New-Object System.Windows.Forms.RichTextBox
-$rtbLog.Location = New-Object System.Drawing.Point(1, 1)
-$rtbLog.Size = New-Object System.Drawing.Size(458, 138)
-$rtbLog.BorderStyle = "None"
-$rtbLog.Font = $fontLog
-$rtbLog.BackColor = [System.Drawing.Color]::White
-$rtbLog.ForeColor = $colorTexto
-$rtbLog.ReadOnly = $true
-$rtbLog.Multiline = $true
-$rtbLog.ScrollBars = "Vertical"
-$rtbLog.WordWrap = $false
-$panelLog.Controls.Add($rtbLog)
+$dgvLog = New-Object System.Windows.Forms.DataGridView
+$dgvLog.Location = New-Object System.Drawing.Point(1, 1)
+$dgvLog.Size = New-Object System.Drawing.Size(458, 148)
+$dgvLog.BackgroundColor = [System.Drawing.Color]::White
+$dgvLog.BorderStyle = "None"
+$dgvLog.Font = $fontLog
+$dgvLog.ColumnHeadersVisible = $false
+$dgvLog.RowHeadersVisible = $false
+$dgvLog.AllowUserToAddRows = $false
+$dgvLog.AllowUserToDeleteRows = $false
+$dgvLog.AllowUserToResizeRows = $false
+$dgvLog.AllowUserToResizeColumns = $false
+$dgvLog.ReadOnly = $true
+$dgvLog.MultiSelect = $false
+$dgvLog.SelectionMode = "FullRowSelect"
+$dgvLog.CellBorderStyle = "SingleHorizontal"
+$dgvLog.GridColor = [System.Drawing.Color]::FromArgb(230, 231, 233)
+$dgvLog.RowTemplate.Height = 28
+$dgvLog.DefaultCellStyle.SelectionBackColor = [System.Drawing.Color]::FromArgb(235, 244, 253)
+$dgvLog.DefaultCellStyle.SelectionForeColor = $colorTexto
+$dgvLog.DefaultCellStyle.Padding = New-Object System.Windows.Forms.Padding(6, 0, 6, 0)
+$dgvLog.EnableHeadersVisualStyles = $false
+$dgvLog.ScrollBars = "Vertical"
+
+$colHora = New-Object System.Windows.Forms.DataGridViewTextBoxColumn
+$colHora.Name = "Hora"
+$colHora.Width = 65
+$colHora.SortMode = "NotSortable"
+$dgvLog.Columns.Add($colHora) | Out-Null
+
+$colEvento = New-Object System.Windows.Forms.DataGridViewTextBoxColumn
+$colEvento.Name = "Evento"
+$colEvento.AutoSizeMode = "Fill"
+$colEvento.SortMode = "NotSortable"
+$dgvLog.Columns.Add($colEvento) | Out-Null
+
+$colEstado = New-Object System.Windows.Forms.DataGridViewTextBoxColumn
+$colEstado.Name = "Estado"
+$colEstado.Width = 110
+$colEstado.SortMode = "NotSortable"
+$colEstado.DefaultCellStyle.Alignment = "MiddleRight"
+$colEstado.DefaultCellStyle.Font = New-Object System.Drawing.Font("Segoe UI", 9.5, [System.Drawing.FontStyle]::Bold)
+$dgvLog.Columns.Add($colEstado) | Out-Null
+
+$panelLog.Controls.Add($dgvLog)
+
+$dgvLog.Add_CellFormatting({
+    param($sender, $e)
+    if ($dgvLog.Columns[$e.ColumnIndex].Name -ne "Estado") { return }
+    $valor = [string]$e.Value
+    if ($valor -match "Error") {
+        $e.CellStyle.ForeColor = $colorError
+    } elseif ($valor -match "Agregada|Aplicado|Eliminada|Restaurado|^Existe$") {
+        $e.CellStyle.ForeColor = $colorOk
+    } elseif ($valor -match "Ya existia|No existia|No existe") {
+        $e.CellStyle.ForeColor = $colorAviso
+    } else {
+        $e.CellStyle.ForeColor = $colorTexto
+    }
+})
 
 function Write-Log {
-    param([string]$Texto)
+    param([string]$Evento, [string]$Estado)
     $marca = Get-Date -Format "HH:mm:ss"
-    $linea = "[$marca] $Texto"
-
-    $colorLinea = $colorTexto
-    if ($linea -match "Error") {
-        $colorLinea = $colorError
-    } elseif ($linea -match "Agregada|Aplicado|Eliminada|restaurado") {
-        $colorLinea = $colorOk
-    } elseif ($linea -match "Ya existia|No existia") {
-        $colorLinea = $colorAviso
-    }
-
-    $rtbLog.SelectionStart = $rtbLog.TextLength
-    $rtbLog.SelectionLength = 0
-    $rtbLog.SelectionColor = $colorLinea
-    $rtbLog.AppendText("$linea`r`n")
-    $rtbLog.ScrollToCaret()
+    $fila = $dgvLog.Rows.Add($marca, $Evento, $Estado)
+    $dgvLog.FirstDisplayedScrollingRowIndex = $dgvLog.Rows.Count - 1
 }
 
 # --------------------- Eventos ---------------------
@@ -356,18 +403,26 @@ $btnAgregarRutas.Add_Click({
         [System.Windows.Forms.MessageBox]::Show("Introduce una Gateway valida.", "FARMASOFT", "OK", "Warning")
         return
     }
-    Write-Log "Añadiendo rutas..."
     foreach ($ruta in $Rutas) {
         $estado = Add-RutaEstatica -Destino $ruta -Gateway $txtGw.Text
-        Write-Log "$ruta -> $estado"
+        Write-Log -Evento "Ruta $ruta" -Estado $estado
     }
 })
 
 $btnEliminarRutas.Add_Click({
-    Write-Log "Eliminando rutas..."
     foreach ($ruta in $Rutas) {
         $estado = Remove-RutaEstatica -Destino $ruta
-        Write-Log "$ruta -> $estado"
+        Write-Log -Evento "Ruta $ruta" -Estado $estado
+    }
+})
+
+$btnComprobarRutas.Add_Click({
+    foreach ($ruta in $Rutas) {
+        if (Get-RouteExists -Destino $ruta) {
+            Write-Log -Evento "Ruta $ruta" -Estado "Existe"
+        } else {
+            Write-Log -Evento "Ruta $ruta" -Estado "No existe"
+        }
     }
 })
 
@@ -378,9 +433,9 @@ $btnAplicarDns.Add_Click({
     }
     try {
         Set-DnsAdaptador -Adaptador $cmbAdaptador.SelectedItem -Servidores $ServidoresDns
-        Write-Log "DNS aplicado en '$($cmbAdaptador.SelectedItem)': $($ServidoresDns -join ', ')"
+        Write-Log -Evento "DNS en $($cmbAdaptador.SelectedItem): $($ServidoresDns -join ', ')" -Estado "Aplicado"
     } catch {
-        Write-Log "Error al aplicar DNS: $_"
+        Write-Log -Evento "DNS en $($cmbAdaptador.SelectedItem): $_" -Estado "Error"
     }
 })
 
@@ -391,9 +446,9 @@ $btnRestaurarDns.Add_Click({
     }
     try {
         Reset-DnsAdaptador -Adaptador $cmbAdaptador.SelectedItem -Servidores $ServidoresDnsPorDefecto
-        Write-Log "DNS restaurado en '$($cmbAdaptador.SelectedItem)': $($ServidoresDnsPorDefecto -join ', ')"
+        Write-Log -Evento "DNS en $($cmbAdaptador.SelectedItem): $($ServidoresDnsPorDefecto -join ', ')" -Estado "Restaurado"
     } catch {
-        Write-Log "Error al restaurar DNS: $_"
+        Write-Log -Evento "DNS en $($cmbAdaptador.SelectedItem): $_" -Estado "Error"
     }
 })
 
