@@ -434,6 +434,7 @@ $colEvento = New-Object System.Windows.Forms.DataGridViewTextBoxColumn
 $colEvento.Name = "Evento"
 $colEvento.FillWeight = 60
 $colEvento.SortMode = "NotSortable"
+$colEvento.DefaultCellStyle.WrapMode = [System.Windows.Forms.DataGridViewTriState]::True
 $dgvLog.Columns.Add($colEvento) | Out-Null
 
 $colEstado = New-Object System.Windows.Forms.DataGridViewTextBoxColumn
@@ -444,27 +445,25 @@ $colEstado.DefaultCellStyle.Alignment = "MiddleRight"
 $colEstado.DefaultCellStyle.Font = $fontLogEstado
 $dgvLog.Columns.Add($colEstado) | Out-Null
 
-$dgvLog.Add_CellFormatting({
-    param($sender, $e)
-    if ($dgvLog.Columns[$e.ColumnIndex].Name -ne "Estado") { return }
-    $valor = [string]$e.Value
-    if ($valor -match "Error") {
-        $e.CellStyle.ForeColor = $colorError
-    } elseif ($valor -match "Agregada|Aplicado|Restaurado|^Existe$") {
-        $e.CellStyle.ForeColor = $colorOk
-    } elseif ($valor -match "Eliminada") {
-        $e.CellStyle.ForeColor = $colorEliminado
-    } elseif ($valor -match "Ya existia|No existia|No existe") {
-        $e.CellStyle.ForeColor = $colorAviso
-    } else {
-        $e.CellStyle.ForeColor = $colorTexto
-    }
-})
+$dgvLog.AutoSizeRowsMode = [System.Windows.Forms.DataGridViewAutoSizeRowsMode]::AllCells
 
 function Write-Log {
     param([string]$Evento, [string]$Estado)
     $marca = Get-Date -Format "HH:mm:ss"
-    $dgvLog.Rows.Add($marca, $Evento, $Estado) | Out-Null
+    $indice = $dgvLog.Rows.Add($marca, $Evento, $Estado)
+
+    $colorEstado = $colorTexto
+    if ($Estado -match "Error") {
+        $colorEstado = $colorError
+    } elseif ($Estado -match "Agregada|Aplicado|Restaurado|^Existe$") {
+        $colorEstado = $colorOk
+    } elseif ($Estado -match "Eliminada") {
+        $colorEstado = $colorEliminado
+    } elseif ($Estado -match "Ya existia|No existia|No existe") {
+        $colorEstado = $colorAviso
+    }
+    $dgvLog.Rows[$indice].Cells["Estado"].Style.ForeColor = $colorEstado
+
     $dgvLog.FirstDisplayedScrollingRowIndex = $dgvLog.Rows.Count - 1
 }
 
