@@ -113,18 +113,25 @@ function Reset-DnsAdaptador {
 # ==========================================================
 # Interfaz grafica
 # ==========================================================
-$fontBase   = New-Object System.Drawing.Font("Segoe UI", 10)
-$fontTitulo = New-Object System.Drawing.Font("Segoe UI", 18, [System.Drawing.FontStyle]::Bold)
-$fontBoton  = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
-$fontLog    = New-Object System.Drawing.Font("Consolas", 9)
+$fontBase    = New-Object System.Drawing.Font("Segoe UI", 10)
+$fontLogo    = New-Object System.Drawing.Font("Segoe UI", 22, [System.Drawing.FontStyle]::Bold)
+$fontLogoSub = New-Object System.Drawing.Font("Segoe UI", 8, [System.Drawing.FontStyle]::Italic)
+$fontLogoSub2= New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
+$fontBoton   = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
+$fontLog     = New-Object System.Drawing.Font("Segoe UI", 9.5)
 
-$colorFondo   = [System.Drawing.Color]::FromArgb(246, 247, 249)
-$colorAccento = [System.Drawing.Color]::FromArgb(0, 120, 212)
-$colorTexto   = [System.Drawing.Color]::FromArgb(40, 40, 40)
+$colorFondo    = [System.Drawing.Color]::FromArgb(246, 247, 249)
+$colorAccento  = [System.Drawing.Color]::FromArgb(0, 120, 212)
+$colorTexto    = [System.Drawing.Color]::FromArgb(40, 40, 40)
+$colorLogoAzul = [System.Drawing.Color]::FromArgb(11, 45, 92)
+$colorLogoNaranja = [System.Drawing.Color]::FromArgb(240, 120, 90)
+$colorOk       = [System.Drawing.Color]::FromArgb(30, 140, 70)
+$colorError    = [System.Drawing.Color]::FromArgb(200, 45, 45)
+$colorAviso    = [System.Drawing.Color]::FromArgb(150, 150, 150)
 
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "FARMASOFT"
-$form.Size = New-Object System.Drawing.Size(480, 620)
+$form.Size = New-Object System.Drawing.Size(520, 660)
 $form.StartPosition = "CenterScreen"
 $form.FormBorderStyle = "FixedDialog"
 $form.MaximizeBox = $false
@@ -133,19 +140,36 @@ $form.Font = $fontBase
 $form.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Font
 $form.AutoScaleDimensions = New-Object System.Drawing.SizeF(96.0, 96.0)
 
-$lblTitulo = New-Object System.Windows.Forms.Label
-$lblTitulo.Text = "FARMASOFT"
-$lblTitulo.Font = $fontTitulo
-$lblTitulo.ForeColor = $colorAccento
-$lblTitulo.AutoSize = $true
-$lblTitulo.Location = New-Object System.Drawing.Point(30, 25)
-$form.Controls.Add($lblTitulo)
+# --------------------- Logotipo ---------------------
+$lblLogo = New-Object System.Windows.Forms.Label
+$lblLogo.Text = "Farmasoft"
+$lblLogo.Font = $fontLogo
+$lblLogo.ForeColor = $colorLogoAzul
+$lblLogo.AutoSize = $true
+$lblLogo.Location = New-Object System.Drawing.Point(30, 20)
+$form.Controls.Add($lblLogo)
+
+$lblLogoSub1 = New-Object System.Windows.Forms.Label
+$lblLogoSub1.Text = "una empresa"
+$lblLogoSub1.Font = $fontLogoSub
+$lblLogoSub1.ForeColor = $colorLogoNaranja
+$lblLogoSub1.AutoSize = $true
+$lblLogoSub1.Location = New-Object System.Drawing.Point(210, 26)
+$form.Controls.Add($lblLogoSub1)
+
+$lblLogoSub2 = New-Object System.Windows.Forms.Label
+$lblLogoSub2.Text = "Glintt Life"
+$lblLogoSub2.Font = $fontLogoSub2
+$lblLogoSub2.ForeColor = $colorLogoNaranja
+$lblLogoSub2.AutoSize = $true
+$lblLogoSub2.Location = New-Object System.Drawing.Point(210, 42)
+$form.Controls.Add($lblLogoSub2)
 
 $lblSubtitulo = New-Object System.Windows.Forms.Label
 $lblSubtitulo.Text = "Gestor de rutas y DNS"
 $lblSubtitulo.ForeColor = [System.Drawing.Color]::Gray
 $lblSubtitulo.AutoSize = $true
-$lblSubtitulo.Location = New-Object System.Drawing.Point(32, 62)
+$lblSubtitulo.Location = New-Object System.Drawing.Point(32, 68)
 $form.Controls.Add($lblSubtitulo)
 
 # --------------------- Seccion RUTAS ---------------------
@@ -154,20 +178,20 @@ $lblSeccionRutas.Text = "Rutas"
 $lblSeccionRutas.Font = $fontBoton
 $lblSeccionRutas.ForeColor = $colorTexto
 $lblSeccionRutas.AutoSize = $true
-$lblSeccionRutas.Location = New-Object System.Drawing.Point(30, 110)
+$lblSeccionRutas.Location = New-Object System.Drawing.Point(30, 120)
 $form.Controls.Add($lblSeccionRutas)
 
 $lblGw = New-Object System.Windows.Forms.Label
 $lblGw.Text = "Gateway"
 $lblGw.ForeColor = $colorTexto
 $lblGw.AutoSize = $true
-$lblGw.Location = New-Object System.Drawing.Point(30, 148)
+$lblGw.Location = New-Object System.Drawing.Point(30, 158)
 $form.Controls.Add($lblGw)
 
 $txtGw = New-Object System.Windows.Forms.TextBox
 $txtGw.Font = $fontBase
-$txtGw.Location = New-Object System.Drawing.Point(125, 144)
-$txtGw.Size = New-Object System.Drawing.Size(200, 28)
+$txtGw.Location = New-Object System.Drawing.Point(125, 154)
+$txtGw.Size = New-Object System.Drawing.Size(220, 28)
 $form.Controls.Add($txtGw)
 
 $btnDetectarGw = New-Object System.Windows.Forms.Button
@@ -178,8 +202,8 @@ $btnDetectarGw.FlatAppearance.BorderSize = 1
 $btnDetectarGw.FlatAppearance.BorderColor = $colorAccento
 $btnDetectarGw.BackColor = [System.Drawing.Color]::White
 $btnDetectarGw.ForeColor = $colorAccento
-$btnDetectarGw.Location = New-Object System.Drawing.Point(335, 143)
-$btnDetectarGw.Size = New-Object System.Drawing.Size(95, 30)
+$btnDetectarGw.Location = New-Object System.Drawing.Point(355, 153)
+$btnDetectarGw.Size = New-Object System.Drawing.Size(105, 30)
 $btnDetectarGw.UseVisualStyleBackColor = $false
 $form.Controls.Add($btnDetectarGw)
 
@@ -199,8 +223,8 @@ $btnAgregarRutas.FlatStyle = "Flat"
 $btnAgregarRutas.FlatAppearance.BorderSize = 0
 $btnAgregarRutas.BackColor = $colorAccento
 $btnAgregarRutas.ForeColor = [System.Drawing.Color]::White
-$btnAgregarRutas.Location = New-Object System.Drawing.Point(30, 185)
-$btnAgregarRutas.Size = New-Object System.Drawing.Size(195, 42)
+$btnAgregarRutas.Location = New-Object System.Drawing.Point(30, 195)
+$btnAgregarRutas.Size = New-Object System.Drawing.Size(222, 42)
 $btnAgregarRutas.UseVisualStyleBackColor = $false
 $form.Controls.Add($btnAgregarRutas)
 
@@ -212,8 +236,8 @@ $btnEliminarRutas.FlatAppearance.BorderSize = 1
 $btnEliminarRutas.FlatAppearance.BorderColor = $colorAccento
 $btnEliminarRutas.BackColor = [System.Drawing.Color]::White
 $btnEliminarRutas.ForeColor = $colorAccento
-$btnEliminarRutas.Location = New-Object System.Drawing.Point(235, 185)
-$btnEliminarRutas.Size = New-Object System.Drawing.Size(195, 42)
+$btnEliminarRutas.Location = New-Object System.Drawing.Point(268, 195)
+$btnEliminarRutas.Size = New-Object System.Drawing.Size(222, 42)
 $btnEliminarRutas.UseVisualStyleBackColor = $false
 $form.Controls.Add($btnEliminarRutas)
 
@@ -223,20 +247,20 @@ $lblSeccionDns.Text = "DNS"
 $lblSeccionDns.Font = $fontBoton
 $lblSeccionDns.ForeColor = $colorTexto
 $lblSeccionDns.AutoSize = $true
-$lblSeccionDns.Location = New-Object System.Drawing.Point(30, 250)
+$lblSeccionDns.Location = New-Object System.Drawing.Point(30, 260)
 $form.Controls.Add($lblSeccionDns)
 
 $lblAdaptador = New-Object System.Windows.Forms.Label
 $lblAdaptador.Text = "Adaptador"
 $lblAdaptador.ForeColor = $colorTexto
 $lblAdaptador.AutoSize = $true
-$lblAdaptador.Location = New-Object System.Drawing.Point(30, 288)
+$lblAdaptador.Location = New-Object System.Drawing.Point(30, 298)
 $form.Controls.Add($lblAdaptador)
 
 $cmbAdaptador = New-Object System.Windows.Forms.ComboBox
 $cmbAdaptador.Font = $fontBase
-$cmbAdaptador.Location = New-Object System.Drawing.Point(125, 284)
-$cmbAdaptador.Size = New-Object System.Drawing.Size(305, 28)
+$cmbAdaptador.Location = New-Object System.Drawing.Point(125, 294)
+$cmbAdaptador.Size = New-Object System.Drawing.Size(335, 28)
 $cmbAdaptador.DropDownStyle = "DropDownList"
 try {
     Get-Adaptadores | ForEach-Object { $cmbAdaptador.Items.Add($_) | Out-Null }
@@ -245,10 +269,10 @@ try {
 $form.Controls.Add($cmbAdaptador)
 
 $lblDnsInfo = New-Object System.Windows.Forms.Label
-$lblDnsInfo.Text = "Se aplicaran: " + ($ServidoresDns -join "  ->  ")
+$lblDnsInfo.Text = "Se aplicaran:`r`n" + ($ServidoresDns -join "  ->  ")
 $lblDnsInfo.ForeColor = [System.Drawing.Color]::Gray
 $lblDnsInfo.AutoSize = $true
-$lblDnsInfo.Location = New-Object System.Drawing.Point(30, 322)
+$lblDnsInfo.Location = New-Object System.Drawing.Point(30, 332)
 $form.Controls.Add($lblDnsInfo)
 
 $btnAplicarDns = New-Object System.Windows.Forms.Button
@@ -258,8 +282,8 @@ $btnAplicarDns.FlatStyle = "Flat"
 $btnAplicarDns.FlatAppearance.BorderSize = 0
 $btnAplicarDns.BackColor = $colorAccento
 $btnAplicarDns.ForeColor = [System.Drawing.Color]::White
-$btnAplicarDns.Location = New-Object System.Drawing.Point(30, 355)
-$btnAplicarDns.Size = New-Object System.Drawing.Size(195, 42)
+$btnAplicarDns.Location = New-Object System.Drawing.Point(30, 400)
+$btnAplicarDns.Size = New-Object System.Drawing.Size(222, 42)
 $btnAplicarDns.UseVisualStyleBackColor = $false
 $form.Controls.Add($btnAplicarDns)
 
@@ -271,8 +295,8 @@ $btnRestaurarDns.FlatAppearance.BorderSize = 1
 $btnRestaurarDns.FlatAppearance.BorderColor = $colorAccento
 $btnRestaurarDns.BackColor = [System.Drawing.Color]::White
 $btnRestaurarDns.ForeColor = $colorAccento
-$btnRestaurarDns.Location = New-Object System.Drawing.Point(235, 355)
-$btnRestaurarDns.Size = New-Object System.Drawing.Size(195, 42)
+$btnRestaurarDns.Location = New-Object System.Drawing.Point(268, 400)
+$btnRestaurarDns.Size = New-Object System.Drawing.Size(222, 42)
 $btnRestaurarDns.UseVisualStyleBackColor = $false
 $form.Controls.Add($btnRestaurarDns)
 
@@ -282,28 +306,62 @@ $lblLog.Text = "Registro de actividad"
 $lblLog.Font = $fontBoton
 $lblLog.ForeColor = $colorTexto
 $lblLog.AutoSize = $true
-$lblLog.Location = New-Object System.Drawing.Point(30, 415)
+$lblLog.Location = New-Object System.Drawing.Point(30, 460)
 $form.Controls.Add($lblLog)
 
 $panelLog = New-Object System.Windows.Forms.Panel
-$panelLog.Location = New-Object System.Drawing.Point(30, 445)
-$panelLog.Size = New-Object System.Drawing.Size(400, 110)
-$panelLog.BackColor = [System.Drawing.Color]::FromArgb(210, 213, 218)
+$panelLog.Location = New-Object System.Drawing.Point(30, 490)
+$panelLog.Size = New-Object System.Drawing.Size(460, 140)
+$panelLog.BackColor = [System.Drawing.Color]::FromArgb(215, 218, 222)
 $form.Controls.Add($panelLog)
 
 $lstLog = New-Object System.Windows.Forms.ListBox
 $lstLog.Location = New-Object System.Drawing.Point(1, 1)
-$lstLog.Size = New-Object System.Drawing.Size(398, 108)
+$lstLog.Size = New-Object System.Drawing.Size(458, 138)
 $lstLog.BorderStyle = "None"
-$lstLog.Font = New-Object System.Drawing.Font("Segoe UI", 9.5)
+$lstLog.Font = $fontLog
 $lstLog.BackColor = [System.Drawing.Color]::White
 $lstLog.ForeColor = $colorTexto
-$lstLog.ItemHeight = 20
+$lstLog.ItemHeight = 24
+$lstLog.DrawMode = "OwnerDrawFixed"
+$lstLog.SelectionMode = "None"
+$lstLog.IntegralHeight = $false
 $panelLog.Controls.Add($lstLog)
+
+$lstLog.Add_DrawItem({
+    param($sender, $e)
+    if ($e.Index -lt 0) { return }
+    $texto = $lstLog.Items[$e.Index]
+
+    if ($e.Index % 2 -eq 0) {
+        $fondo = [System.Drawing.Color]::White
+    } else {
+        $fondo = [System.Drawing.Color]::FromArgb(248, 249, 250)
+    }
+    $pincelFondo = New-Object System.Drawing.SolidBrush($fondo)
+    $e.Graphics.FillRectangle($pincelFondo, $e.Bounds)
+
+    $colorLinea = $colorTexto
+    if ($texto -match "Error") {
+        $colorLinea = $colorError
+    } elseif ($texto -match "Agregada|Aplicado|Eliminada|restaurado") {
+        $colorLinea = $colorOk
+    } elseif ($texto -match "Ya existia|No existia") {
+        $colorLinea = $colorAviso
+    }
+
+    $pincelTexto = New-Object System.Drawing.SolidBrush($colorLinea)
+    $rectTexto = New-Object System.Drawing.RectangleF($e.Bounds.X + 10, $e.Bounds.Y + 3, $e.Bounds.Width - 20, $e.Bounds.Height - 6)
+    $e.Graphics.DrawString($texto, $lstLog.Font, $pincelTexto, $rectTexto)
+
+    $pincelFondo.Dispose()
+    $pincelTexto.Dispose()
+})
 
 function Write-Log {
     param([string]$Texto)
-    $lstLog.Items.Add($Texto) | Out-Null
+    $marca = Get-Date -Format "HH:mm:ss"
+    $lstLog.Items.Add("[$marca] $Texto") | Out-Null
     $lstLog.TopIndex = $lstLog.Items.Count - 1
 }
 
