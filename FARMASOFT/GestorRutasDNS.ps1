@@ -1,4 +1,4 @@
-#requires -version 5.0
+﻿#requires -version 5.0
 <#
     FARMASOFT - Gestor de Rutas y DNS
     App con interfaz grafica (WinForms) para:
@@ -34,9 +34,18 @@ Add-Type -Name Win32 -Namespace ConsoleHider -MemberDefinition '
     public static extern IntPtr GetConsoleWindow();
     [DllImport("user32.dll")]
     public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+    [DllImport("user32.dll")]
+    public static extern bool SetProcessDPIAware();
 '
 $consoleHandle = [ConsoleHider.Win32]::GetConsoleWindow()
 [ConsoleHider.Win32]::ShowWindow($consoleHandle, 0) | Out-Null
+
+# ==========================================================
+# Evitar que Windows escale mal la interfaz (letras borrosas/enormes)
+# ==========================================================
+[ConsoleHider.Win32]::SetProcessDPIAware() | Out-Null
+[System.Windows.Forms.Application]::EnableVisualStyles()
+[System.Windows.Forms.Application]::SetCompatibleTextRenderingDefault($false)
 
 # ==========================================================
 # Configuracion
@@ -95,9 +104,9 @@ function Reset-DnsAdaptador {
 # ==========================================================
 # Interfaz grafica
 # ==========================================================
-$fontBase   = New-Object System.Drawing.Font("Calibri", 10)
-$fontTitulo = New-Object System.Drawing.Font("Calibri", 16, [System.Drawing.FontStyle]::Bold)
-$fontBoton  = New-Object System.Drawing.Font("Calibri", 10, [System.Drawing.FontStyle]::Bold)
+$fontBase   = New-Object System.Drawing.Font("Segoe UI", 10)
+$fontTitulo = New-Object System.Drawing.Font("Segoe UI", 18, [System.Drawing.FontStyle]::Bold)
+$fontBoton  = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
 $fontLog    = New-Object System.Drawing.Font("Consolas", 9)
 
 $colorFondo   = [System.Drawing.Color]::FromArgb(246, 247, 249)
@@ -106,26 +115,28 @@ $colorTexto   = [System.Drawing.Color]::FromArgb(40, 40, 40)
 
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "FARMASOFT"
-$form.Size = New-Object System.Drawing.Size(460, 520)
+$form.Size = New-Object System.Drawing.Size(480, 560)
 $form.StartPosition = "CenterScreen"
 $form.FormBorderStyle = "FixedDialog"
 $form.MaximizeBox = $false
 $form.BackColor = $colorFondo
 $form.Font = $fontBase
+$form.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Font
+$form.AutoScaleDimensions = New-Object System.Drawing.SizeF(96.0, 96.0)
 
 $lblTitulo = New-Object System.Windows.Forms.Label
 $lblTitulo.Text = "FARMASOFT"
 $lblTitulo.Font = $fontTitulo
 $lblTitulo.ForeColor = $colorAccento
 $lblTitulo.AutoSize = $true
-$lblTitulo.Location = New-Object System.Drawing.Point(25, 20)
+$lblTitulo.Location = New-Object System.Drawing.Point(30, 25)
 $form.Controls.Add($lblTitulo)
 
 $lblSubtitulo = New-Object System.Windows.Forms.Label
 $lblSubtitulo.Text = "Gestor de rutas y DNS"
 $lblSubtitulo.ForeColor = [System.Drawing.Color]::Gray
 $lblSubtitulo.AutoSize = $true
-$lblSubtitulo.Location = New-Object System.Drawing.Point(27, 55)
+$lblSubtitulo.Location = New-Object System.Drawing.Point(32, 62)
 $form.Controls.Add($lblSubtitulo)
 
 # --------------------- Seccion RUTAS ---------------------
@@ -134,19 +145,20 @@ $lblSeccionRutas.Text = "Rutas"
 $lblSeccionRutas.Font = $fontBoton
 $lblSeccionRutas.ForeColor = $colorTexto
 $lblSeccionRutas.AutoSize = $true
-$lblSeccionRutas.Location = New-Object System.Drawing.Point(25, 95)
+$lblSeccionRutas.Location = New-Object System.Drawing.Point(30, 110)
 $form.Controls.Add($lblSeccionRutas)
 
 $lblGw = New-Object System.Windows.Forms.Label
 $lblGw.Text = "Gateway"
 $lblGw.ForeColor = $colorTexto
 $lblGw.AutoSize = $true
-$lblGw.Location = New-Object System.Drawing.Point(25, 128)
+$lblGw.Location = New-Object System.Drawing.Point(30, 148)
 $form.Controls.Add($lblGw)
 
 $txtGw = New-Object System.Windows.Forms.TextBox
-$txtGw.Location = New-Object System.Drawing.Point(110, 124)
-$txtGw.Size = New-Object System.Drawing.Size(180, 26)
+$txtGw.Font = $fontBase
+$txtGw.Location = New-Object System.Drawing.Point(125, 144)
+$txtGw.Size = New-Object System.Drawing.Size(200, 28)
 $form.Controls.Add($txtGw)
 
 $btnAgregarRutas = New-Object System.Windows.Forms.Button
@@ -156,8 +168,9 @@ $btnAgregarRutas.FlatStyle = "Flat"
 $btnAgregarRutas.FlatAppearance.BorderSize = 0
 $btnAgregarRutas.BackColor = $colorAccento
 $btnAgregarRutas.ForeColor = [System.Drawing.Color]::White
-$btnAgregarRutas.Location = New-Object System.Drawing.Point(25, 165)
-$btnAgregarRutas.Size = New-Object System.Drawing.Size(190, 38)
+$btnAgregarRutas.Location = New-Object System.Drawing.Point(30, 185)
+$btnAgregarRutas.Size = New-Object System.Drawing.Size(195, 42)
+$btnAgregarRutas.UseVisualStyleBackColor = $false
 $form.Controls.Add($btnAgregarRutas)
 
 $btnEliminarRutas = New-Object System.Windows.Forms.Button
@@ -168,8 +181,9 @@ $btnEliminarRutas.FlatAppearance.BorderSize = 1
 $btnEliminarRutas.FlatAppearance.BorderColor = $colorAccento
 $btnEliminarRutas.BackColor = [System.Drawing.Color]::White
 $btnEliminarRutas.ForeColor = $colorAccento
-$btnEliminarRutas.Location = New-Object System.Drawing.Point(225, 165)
-$btnEliminarRutas.Size = New-Object System.Drawing.Size(190, 38)
+$btnEliminarRutas.Location = New-Object System.Drawing.Point(235, 185)
+$btnEliminarRutas.Size = New-Object System.Drawing.Size(195, 42)
+$btnEliminarRutas.UseVisualStyleBackColor = $false
 $form.Controls.Add($btnEliminarRutas)
 
 # --------------------- Seccion DNS ---------------------
@@ -178,19 +192,20 @@ $lblSeccionDns.Text = "DNS"
 $lblSeccionDns.Font = $fontBoton
 $lblSeccionDns.ForeColor = $colorTexto
 $lblSeccionDns.AutoSize = $true
-$lblSeccionDns.Location = New-Object System.Drawing.Point(25, 225)
+$lblSeccionDns.Location = New-Object System.Drawing.Point(30, 250)
 $form.Controls.Add($lblSeccionDns)
 
 $lblAdaptador = New-Object System.Windows.Forms.Label
 $lblAdaptador.Text = "Adaptador"
 $lblAdaptador.ForeColor = $colorTexto
 $lblAdaptador.AutoSize = $true
-$lblAdaptador.Location = New-Object System.Drawing.Point(25, 260)
+$lblAdaptador.Location = New-Object System.Drawing.Point(30, 288)
 $form.Controls.Add($lblAdaptador)
 
 $cmbAdaptador = New-Object System.Windows.Forms.ComboBox
-$cmbAdaptador.Location = New-Object System.Drawing.Point(110, 256)
-$cmbAdaptador.Size = New-Object System.Drawing.Size(305, 26)
+$cmbAdaptador.Font = $fontBase
+$cmbAdaptador.Location = New-Object System.Drawing.Point(125, 284)
+$cmbAdaptador.Size = New-Object System.Drawing.Size(305, 28)
 $cmbAdaptador.DropDownStyle = "DropDownList"
 try {
     Get-Adaptadores | ForEach-Object { $cmbAdaptador.Items.Add($_) | Out-Null }
@@ -202,7 +217,7 @@ $lblDnsInfo = New-Object System.Windows.Forms.Label
 $lblDnsInfo.Text = "Se aplicaran: " + ($ServidoresDns -join "  ->  ")
 $lblDnsInfo.ForeColor = [System.Drawing.Color]::Gray
 $lblDnsInfo.AutoSize = $true
-$lblDnsInfo.Location = New-Object System.Drawing.Point(25, 292)
+$lblDnsInfo.Location = New-Object System.Drawing.Point(30, 322)
 $form.Controls.Add($lblDnsInfo)
 
 $btnAplicarDns = New-Object System.Windows.Forms.Button
@@ -212,8 +227,9 @@ $btnAplicarDns.FlatStyle = "Flat"
 $btnAplicarDns.FlatAppearance.BorderSize = 0
 $btnAplicarDns.BackColor = $colorAccento
 $btnAplicarDns.ForeColor = [System.Drawing.Color]::White
-$btnAplicarDns.Location = New-Object System.Drawing.Point(25, 320)
-$btnAplicarDns.Size = New-Object System.Drawing.Size(190, 38)
+$btnAplicarDns.Location = New-Object System.Drawing.Point(30, 355)
+$btnAplicarDns.Size = New-Object System.Drawing.Size(195, 42)
+$btnAplicarDns.UseVisualStyleBackColor = $false
 $form.Controls.Add($btnAplicarDns)
 
 $btnRestaurarDns = New-Object System.Windows.Forms.Button
@@ -224,14 +240,15 @@ $btnRestaurarDns.FlatAppearance.BorderSize = 1
 $btnRestaurarDns.FlatAppearance.BorderColor = $colorAccento
 $btnRestaurarDns.BackColor = [System.Drawing.Color]::White
 $btnRestaurarDns.ForeColor = $colorAccento
-$btnRestaurarDns.Location = New-Object System.Drawing.Point(225, 320)
-$btnRestaurarDns.Size = New-Object System.Drawing.Size(190, 38)
+$btnRestaurarDns.Location = New-Object System.Drawing.Point(235, 355)
+$btnRestaurarDns.Size = New-Object System.Drawing.Size(195, 42)
+$btnRestaurarDns.UseVisualStyleBackColor = $false
 $form.Controls.Add($btnRestaurarDns)
 
 # --------------------- Registro de actividad ---------------------
 $txtLog = New-Object System.Windows.Forms.TextBox
-$txtLog.Location = New-Object System.Drawing.Point(25, 375)
-$txtLog.Size = New-Object System.Drawing.Size(390, 100)
+$txtLog.Location = New-Object System.Drawing.Point(30, 415)
+$txtLog.Size = New-Object System.Drawing.Size(400, 100)
 $txtLog.Multiline = $true
 $txtLog.ReadOnly = $true
 $txtLog.ScrollBars = "Vertical"
